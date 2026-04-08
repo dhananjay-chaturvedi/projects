@@ -1,0 +1,52 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Log files
+*.log
+*.log.*
+
+# Test files (if temporary)
+test_*.py
+
+# Documentation artifacts
+*.md
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Backup files
+*.bak
+*.backup
+
+# Sensitive config files
+saved_connections.json
+saved_monitor_connections.json
+.dbmanager/
+
+# Configuration files (uncomment if storing sensitive data)
+# config.ini
+
+# Core dumps
+core_*
+*.core

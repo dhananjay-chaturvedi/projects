@@ -1,0 +1,22 @@
+# Database Management Tool - Python Dependencies
+
+# Core Dependencies (Required)
+cryptography>=41.0.0  # Password encryption
+
+# Database Drivers (Optional - install as needed)
+mysql-connector-python>=8.0.0  # MySQL
+psycopg2-binary>=2.9.0  # PostgreSQL
+# cx-Oracle>=8.3.0  # Oracle (requires Instant Client)
+# mariadb>=1.1.0  # MariaDB (may require system packages)
+
+# Data Export (Optional)
+pandas>=2.0.0  # Data manipulation and export
+openpyxl>=3.1.0  # Excel file support
+
+# Note: SQLite support is built into Python (no package needed)
+# Note: Tkinter is included with Python (no package needed)
+
+# For development
+# pytest>=7.4.0
+# black>=23.0.0
+# flake8>=6.0.0
