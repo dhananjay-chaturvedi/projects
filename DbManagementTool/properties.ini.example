@@ -1,0 +1,153 @@
+# ================================================================
+# Database Management Tool - Properties File
+# ================================================================
+# This file contains UI settings, display parameters, and other
+# hardcoded arguments that control application behavior.
+# ================================================================
+
+[ui.window]
+# Main window default size (width x height)
+main_window_width = 1150
+main_window_height = 780
+# Main window minimum size
+main_window_min_width = 860
+main_window_min_height = 520
+# Dialog window sizes
+history_dialog_width = 800
+history_dialog_height = 500
+ai_query_dialog_width = 800
+ai_query_dialog_height = 600
+import_export_dialog_width = 800
+import_export_dialog_height = 500
+settings_dialog_width = 700
+settings_dialog_height = 500
+ai_chat_dialog_width = 650
+ai_chat_dialog_height = 550
+password_dialog_width = 400
+password_dialog_height = 180
+connection_test_dialog_width = 400
+connection_test_dialog_height = 150
+connection_edit_dialog_width = 400
+connection_edit_dialog_height = 250
+metrics_zoom_width = 800
+metrics_zoom_height = 600
+
+[ui.fonts]
+# macOS fonts
+macos_ui_font_family = Helvetica Neue
+macos_ui_font_size = 13
+macos_mono_font_family = Menlo
+macos_mono_font_size = 12
+# Windows fonts
+windows_ui_font_family = Segoe UI
+windows_ui_font_size = 10
+windows_mono_font_family = Consolas
+windows_mono_font_size = 10
+# Linux fonts
+linux_ui_font_family = DejaVu Sans
+linux_ui_font_size = 10
+linux_mono_font_family = DejaVu Sans Mono
+linux_mono_font_size = 10
+# Graph fonts
+graph_title_font_family = Arial
+graph_title_font_size = 14
+graph_label_font_family = Arial
+graph_label_font_size = 10
+graph_axis_font_family = Arial
+graph_axis_font_size = 8
+
+[ui.colors.primary]
+primary = #2196F3
+primary_dark = #1976D2
+primary_light = #BBDEFB
+
+[ui.colors.accent]
+accent = #FF9800
+success = #4CAF50
+warning = #FFC107
+error = #F44336
+
+[ui.colors.neutral]
+bg_main = #F5F5F5
+bg_secondary = #FFFFFF
+bg_dark = #424242
+text_primary = #212121
+text_secondary = #757575
+border = #E0E0E0
+
+[ui.colors.status]
+connected = #4CAF50
+disconnected = #9E9E9E
+error_bg = #FFEBEE
+success_bg = #E8F5E9
+info_bg = #E3F2FD
+
+[ui.colors.graphs]
+# Additional colors for charts and graphs
+blue_light = #0ea5e9
+blue_medium = #0284c7
+teal = #14b8a6
+blue_primary = #3b82f6
+purple = #a855f7
+pink = #f43f5e
+amber = #f59e0b
+red = #ef4444
+
+[ui.spacing]
+# Standard padding values (pixels)
+padding_xs = 2
+padding_sm = 5
+padding_md = 10
+padding_lg = 20
+padding_xl = 40
+padding_xxl = 50
+
+[ui.components]
+# Tree view settings
+tree_row_height = 22
+tree_column_width = 150
+tree_column_min_width = 80
+# SQL Editor
+sql_editor_height = 8
+# Error display
+error_display_height = 10
+# Canvas settings
+canvas_table_height = 150
+# Sash position (percentage)
+default_sash_position = 0.5
+
+[ui.limits]
+# Text truncation limits (characters)
+sql_preview_limit = 100
+sql_error_limit = 500
+sql_history_limit = 100
+cell_copy_limit = 50
+
+[ui.timing]
+# Debounce/delay timings (milliseconds)
+canvas_update_delay = 100
+resize_debounce = 150
+graph_debounce = 100
+
+[ui.thresholds]
+# UI dimension thresholds (pixels)
+height_threshold_high = 100
+height_threshold_low = 80
+width_threshold = 160
+
+[ui.retry]
+# UI operation retry attempts
+max_sash_position_attempts = 18
+
+[monitoring.graphs]
+# Graph dimensions (pixels)
+metric_graph_width = 250
+metric_graph_height = 70
+
+[monitoring.limits]
+# Maximum data points retained per graph (60 points = 5 min at 5 sec interval)
+max_data_points = 60
+
+[sql.formatting]
+# SQL statement display settings
+statement_truncate_length = 100
