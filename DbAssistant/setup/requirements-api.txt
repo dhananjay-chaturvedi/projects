@@ -1,0 +1,10 @@
+# DbManagementTool — REST API optional dependencies
+# Install only when running the REST API server:
+#   pip install -r requirements-api.txt
+#
+# Then start with:
+#   python dbtool.py api
+#   or: uvicorn app.headless.api:app --reload
+
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0

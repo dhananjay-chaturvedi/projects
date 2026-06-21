@@ -1,0 +1,4 @@
+# Schema Converter module — adds to core (see setup/requirements-core.txt + requirements-drivers.txt).
+# Install: bash install.sh --module schema
+fastapi>=0.110
+uvicorn>=0.29

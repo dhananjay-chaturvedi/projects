@@ -1,0 +1,157 @@
+---
+title: Production-grade database management
+description: Production-grade database management with AI query assistance, schema conversion, real-time monitoring, and full UI / CLI / REST API parity. Multi-DB · Multi-cloud · Offline-installable.
+template: splash
+hero:
+  tagline: One tool, five surfaces (Desktop UI · TUI · Web UI · CLI · REST API), every major SQL and NoSQL engine, AI query assistance with RAG, and AWS / Azure / GCP monitoring. Encrypted-by-default, offline-installable.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get started
+      link: /getting-started/quickstart/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/your-org/dbassistant
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## What is DbAssistant?
+
+A single, modular tool that manages SQL and NoSQL databases across AWS,
+Azure, GCP, and on-prem — with a desktop UI, a terminal UI, a web UI, a
+scriptable CLI, and a fully featured REST API that all share the same
+business logic.
+
+<CardGrid stagger>
+  <Card title="Universal database support" icon="seti:db">
+    Oracle, MySQL, MariaDB, PostgreSQL, SQL Server, MongoDB, AWS DocumentDB, SQLite — uniform CRUD, schema, and object browsing.
+  </Card>
+  <Card title="Five surfaces, one logic core" icon="rocket">
+    Whatever you can do in the desktop UI, you can do in the TUI, web UI, CLI, or REST API — tested end-to-end for parity.
+  </Card>
+  <Card title="AI SQL with RAG + a local model" icon="open-book">
+    Claude / Cursor / Codex backends or an offline trainable model. Retrieval-augmented context, multi-tab sessions, SQL-mode safety rails.
+  </Card>
+  <Card title="AWS · Azure · GCP monitoring" icon="cloud-download">
+    CloudWatch + Performance Insights, Azure Monitor, Cloud Monitoring. Threshold rules with sustained-breach logic. Teams alerts.
+  </Card>
+  <Card title="Ship a single module" icon="puzzle">
+    Data Migration · AI Query · Monitoring · App Builder — each plus the shared core can be installed independently.
+  </Card>
+  <Card title="Encrypted by default" icon="seti:lock">
+    Fernet encryption for all saved DB and cloud profiles. Constant-time API-key compare. Files live under <code>~/.dbassistant/</code> only.
+  </Card>
+</CardGrid>
+
+## Quick install
+
+Requires Python 3.10+. Online bundles are ~500 KB; offline bundles
+(~1 GB) include wheels for macOS, Linux, and Windows across Python
+3.10, 3.11, and 3.12.
+
+<Tabs>
+<TabItem label="macOS / Linux">
+
+```bash
+unzip dbassistant-full-1.0.0.zip
+cd dbassistant-full-1.0.0
+./install.sh
+./run.sh
+```
+
+</TabItem>
+<TabItem label="Windows">
+
+```batch
+:: extract dbassistant-full-1.0.0.zip
+cd dbassistant-full-1.0.0
+install.bat
+run.bat
+```
+
+</TabItem>
+<TabItem label="Offline (no internet)">
+
+```bash
+unzip dbassistant-full-1.0.0-offline.zip
+cd dbassistant-full-1.0.0-offline
+./install.sh --offline
+```
+
+</TabItem>
+</Tabs>
+
+## Try the CLI in 30 seconds
+
+```bash
+python dbtool.py modules
+python dbtool.py connections add --name prod --type PostgreSQL \
+    --host db.example.com --user app --port 5432 --db appdb
+python dbtool.py query --conn prod --sql "SELECT version()"
+python dbtool.py ai --conn prod "show the top 5 customers by revenue"
+python dbtool.py monitor --conn prod --interval 30
+```
+
+## Or use the REST API
+
+```bash
+python dbtool.py api --host 0.0.0.0 --port 8000
+
+curl http://localhost:8000/api/health
+curl -X POST http://localhost:8000/api/query \
+    -H "Content-Type: application/json" \
+    -H "X-API-Key: $DBTOOL_API_KEY" \
+    -d '{"connection":"prod","sql":"SELECT 1"}'
+curl http://localhost:8000/api/metrics/prod
+```
+
+## Modules
+
+<CardGrid>
+  <LinkCard title="Data Migration" href="/modules/data-migration/"
+    description="Migrate across Oracle / MySQL / MariaDB / PostgreSQL / SQL Server: convert DDL, transfer data, validate schema and rows." />
+  <LinkCard title="AI Query Assistant" href="/modules/ai-query/"
+    description="Natural-language SQL via Claude / Cursor / Codex or an offline local model. RAG retrieval, multi-tab sessions, chat follow-ups, SQL safety rails." />
+  <LinkCard title="Monitoring" href="/modules/monitoring/"
+    description="DB metrics, OS metrics, AWS / Azure / GCP, SSH server monitoring, threshold rules, Teams alerts, background daemon." />
+  <LinkCard title="App Builder" href="/modules/app-builder/"
+    description="Generate runnable apps from scratch, a codebase, or a database — with governed, agentic build jobs and a package/run lifecycle." />
+</CardGrid>
+
+## Designed for production
+
+<CardGrid stagger>
+  <Card title="Hermetic file layout" icon="seti:folder">
+    Everything lives under <code>~/.dbassistant/</code> with subfolders for keys, connections, runtime, and session data. <code>DBASSISTANT_HOME</code> overrides everything for tests and containers.
+  </Card>
+  <Card title="Idempotent migration" icon="seti:json">
+    Copy-then-rename migration with file locking and a version stamp. Safe across upgrades; never leaves partial state on disk.
+  </Card>
+  <Card title="Tested end-to-end" icon="approve-check">
+    Full pytest suite covering UI, CLI, and REST API. Integration tests with real databases and cloud profiles.
+  </Card>
+  <Card title="Cross-platform shipper" icon="seti:zip">
+    <code>shipper.sh</code> builds lean (~500 KB) or offline (all platforms, all Python 3.10/3.11/3.12 wheels) bundles. Per-module bundles supported.
+  </Card>
+</CardGrid>
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard title="Getting started" href="/getting-started/quickstart/"
+    description="Install and run your first command in 5 minutes." />
+  <LinkCard title="CLI reference" href="/cli/overview/"
+    description="Every command, every flag, every example." />
+  <LinkCard title="REST API reference" href="/api/overview/"
+    description="All endpoints with curl examples." />
+  <LinkCard title="Architecture" href="/architecture/overview/"
+    description="How the modular core + five surfaces fit together." />
+  <LinkCard title="Cloud setup" href="/cloud/aws/"
+    description="AWS, Azure, GCP — IAM, auth, metrics." />
+  <LinkCard title="Troubleshooting" href="/troubleshooting/common-issues/"
+    description="Common errors and quick fixes." />
+</CardGrid>

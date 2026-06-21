@@ -1,0 +1,50 @@
+# systemd unit file for DbManagementTool monitoring daemon
+#
+# Install (Linux):
+#   sudo cp systemd/dbtool-monitor.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable dbtool-monitor
+#   sudo systemctl start  dbtool-monitor
+#   sudo systemctl status dbtool-monitor
+#   journalctl -u dbtool-monitor -f
+#
+# Adjust WorkingDirectory and ExecStart paths to match your installation.
+
+[Unit]
+Description=DbManagementTool Monitoring Daemon
+Documentation=https://github.com/your-org/DbManagementTool
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+
+# ── adjust these two paths ───────────────────────────────────────────────────
+WorkingDirectory=/opt/DbManagementTool
+ExecStart=/opt/DbManagementTool/.venv/bin/python dbtool.py daemon start \
+    --foreground \
+    --interval 30 \
+    --output /var/lib/dbtool/metrics.json
+# ────────────────────────────────────────────────────────────────────────────
+
+Restart=on-failure
+RestartSec=10
+
+# Redirect stdout/stderr to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dbtool-monitor
+
+# Resource limits
+LimitNOFILE=65536
+TimeoutStopSec=30
+
+# Security hardening (optional — comment out if causing issues)
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/dbtool /tmp
+
+[Install]
+WantedBy=multi-user.target

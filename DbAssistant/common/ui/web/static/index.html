@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DbManagementTool — Web UI</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">DbManagementTool <span class="muted">Web UI</span></div>
+    <div class="api-key">
+      <input id="api-key" type="password" placeholder="X-API-Key (if set)" />
+      <span id="health" class="health">checking…</span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab" data-tab="welcome">Welcome</button>
+    <button class="tab active" data-tab="connections">Connections</button>
+    <button class="tab" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="sql">SQL Editor</button>
+    <button class="tab" data-tab="objects">Objects</button>
+    <button class="tab module-tab" data-tab="migration" data-module="migrator" hidden>Data Migration</button>
+    <button class="tab module-tab" data-tab="ai" data-module="ai" hidden>AI Query</button>
+    <button class="tab module-tab" data-tab="app-builder" data-module="ai" hidden>App Builder</button>
+    <button class="tab module-tab" data-tab="monitor" data-module="monitor" hidden>Monitoring</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </nav>
+
+  <main>
+    <!-- Welcome (content rendered from the shared spec via /ui/config) -->
+    <section class="panel" id="panel-welcome">
+      <div id="welcome-content"></div>
+    </section>
+
+    <!-- Connections -->
+    <section class="panel active" id="panel-connections">
+
+      <!-- Active connections -->
+      <details class="section" id="sec-active" open>
+        <summary>Active connections</summary>
+        <div class="section-body">
+          <div class="row">
+            <button id="active-refresh">Refresh</button>
+            <button id="active-disconnect-selected" class="warning">Disconnect Selected</button>
+            <button id="active-disconnect-all" class="danger">Disconnect All</button>
+          </div>
+          <table class="grid" id="active-grid">
+            <thead><tr><th>Name</th><th>Type</th><th>Host</th><th>Port</th><th>Database</th><th>User</th><th>State</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="status" id="active-status"></div>
+        </div>
+      </details>
+
+      <!-- Saved connections (below Active; present in all UIs) -->
+      <details class="section" id="sec-saved">
+        <summary>Saved connections</summary>
+        <div class="section-body">
+          <div class="row"><button id="conn-refresh">Refresh</button></div>
+          <table class="grid" id="conn-grid">
+            <thead><tr><th>Name</th><th>Type</th><th>Host</th><th>Port</th><th>Database</th><th>User</th><th>SSH</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+
+      <!-- Add or select database connection (direct / localhost) -->
+      <details class="section" id="sec-add">
+        <summary>Add or select database connection</summary>
+        <div class="section-body">
+          <form id="conn-form" class="form">
+            <label class="full">Connection name
+              <input name="name" required autocomplete="off" />
+            </label>
+
+            <label>Database Type
+              <select name="db_type" id="conn-dbtype"></select>
+            </label>
+            <label>Host <input name="host" value="localhost" /></label>
+            <label>Port <input name="port" id="conn-port" /></label>
+
+            <label><span id="conn-service-label">Database name</span>
+              <input name="service" id="conn-service" />
+            </label>
+            <label>Username <input name="user" autocomplete="off" /></label>
+
+            <label>Password <input name="password" type="password" autocomplete="new-password" /></label>
+            <label class="checkbox"><input type="checkbox" name="save_password" id="conn-save-pw" checked /> Save password (encrypted)</label>
+
+            <!-- Capability-driven SSL/TLS (shown per engine) -->
+            <fieldset class="subgroup full" id="ssl-group" hidden>
+              <legend>SSL / TLS</legend>
+              <div class="form">
+                <label id="ssl-mode-row">SSL mode
+                  <select name="ssl_mode" id="conn-ssl-mode"></select>
+                </label>
+                <label id="ssl-ca-row" hidden>SSL CA file <input name="ssl_ca" /></label>
+                <label id="ssl-cert-row" hidden>SSL client cert <input name="ssl_cert" /></label>
+                <label id="ssl-key-row" hidden>SSL client key <input name="ssl_key" /></label>
+                <label id="ssl-wallet-row" hidden>Oracle wallet dir <input name="wallet_location" /></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="subgroup full" id="tls-group" hidden>
+              <legend>TLS (MongoDB / DocumentDB)</legend>
+              <div class="form">
+                <label class="checkbox"><input type="checkbox" name="tls" id="conn-tls" /> Use TLS</label>
+                <label>TLS CA file <input name="tls_ca_file" /></label>
+              </div>
+            </fieldset>
+
+            <div class="actions full">
+              <button type="button" id="conn-connect-form" class="primary">Connect</button>
+              <button type="button" id="conn-test-form">Test Connection</button>
+              <button type="button" id="conn-load-saved">Load Saved</button>
+              <button type="submit">Save Connection</button>
+              <button type="reset">Clear</button>
+            </div>
+            <input type="hidden" id="conn-edit-name" value="" />
+          </form>
+          <div class="status" id="conn-status"></div>
+        </div>
+      </details>
+
+      <!-- Add or select remote database connection (SSH tunnel) -->
+      <details class="section" id="sec-remote">
+        <summary>Add or select remote database connection</summary>
+        <div class="section-body">
+          <p class="hint">Connect to a database reachable only through a bastion / jump host. The tool opens an SSH tunnel, then connects locally. DB host/port below are the database endpoint as seen FROM the SSH host (often localhost).</p>
+          <form id="rconn-form" class="form">
+            <label class="full">Connection name <input id="r-name" autocomplete="off" /></label>
+            <label>Database type <select id="r-dbtype"></select></label>
+            <label>DB host <input id="r-host" value="localhost" /></label>
+            <label>DB port <input id="r-port" /></label>
+            <label><span id="r-service-label">Database / Service</span> <input id="r-service" /></label>
+            <label>DB username <input id="r-user" autocomplete="off" /></label>
+            <label>DB password <input id="r-password" type="password" autocomplete="new-password" /></label>
+            <label class="checkbox"><input type="checkbox" id="r-save-pw" checked /> Save passwords (encrypted)</label>
+
+            <fieldset class="subgroup full">
+              <legend>SSH tunnel</legend>
+              <div class="form">
+                <label>SSH host <input id="r-ssh-host" /></label>
+                <label>SSH port <input id="r-ssh-port" value="22" /></label>
+                <label>SSH username <input id="r-ssh-user" autocomplete="off" /></label>
+                <label>SSH auth
+                  <select id="r-ssh-auth">
+                    <option value="password">Password</option>
+                    <option value="key">Key file</option>
+                  </select>
+                </label>
+                <label id="r-ssh-pw-row">SSH password <input id="r-ssh-password" type="password" autocomplete="new-password" /></label>
+                <label id="r-ssh-key-row" hidden>SSH key file <input id="r-ssh-key" /></label>
+              </div>
+            </fieldset>
+
+            <div class="actions full">
+              <button type="button" id="r-connect" class="primary">Connect</button>
+              <button type="button" id="r-test">Test Connection</button>
+              <button type="button" id="r-load-saved">Load Saved</button>
+              <button type="submit">Save</button>
+              <button type="reset">Clear</button>
+            </div>
+            <input type="hidden" id="r-edit-name" value="" />
+          </form>
+          <div class="status" id="r-status"></div>
+        </div>
+      </details>
+
+      <!-- Add or select cloud database connection (AWS / Azure / GCP / Other) -->
+      <details class="section" id="sec-cloud">
+        <summary>Add or select cloud database connection</summary>
+        <div class="section-body">
+          <p class="hint">Authenticate to a managed cloud database (AWS RDS, Azure SQL, Cloud SQL, …) and mirror it into your saved connections. Fields adapt to the selected provider and auth method.</p>
+          <form id="cloud-form" class="form">
+            <label>Cloud provider
+              <select id="cloud-provider"></select>
+            </label>
+            <label>Authentication
+              <select id="cloud-auth-mode"></select>
+            </label>
+
+            <fieldset class="subgroup full">
+              <legend>Cloud resource</legend>
+              <div class="form" id="cloud-resource-fields"></div>
+            </fieldset>
+
+            <fieldset class="subgroup full" id="cloud-auth-group">
+              <legend id="cloud-auth-legend">Credentials</legend>
+              <p class="hint" id="cloud-auth-help" hidden></p>
+              <div class="form" id="cloud-auth-fields"></div>
+            </fieldset>
+
+            <fieldset class="subgroup full">
+              <legend>Database login</legend>
+              <div class="form" id="cloud-sql-fields"></div>
+            </fieldset>
+
+            <div class="actions full">
+              <button type="button" id="cloud-connect" class="primary">Connect Cloud DB</button>
+              <button type="button" id="cloud-test-login">Test Cloud Login</button>
+              <button type="button" id="cloud-test-db">Test DB Connection</button>
+              <button type="button" id="cloud-resolve">Resolve SQL Endpoint</button>
+              <button type="button" id="cloud-load-saved">Load Saved</button>
+              <button type="submit">Save</button>
+              <button type="reset">Clear</button>
+            </div>
+            <input type="hidden" id="cloud-edit-name" value="" />
+          </form>
+          <div class="status" id="cloud-status"></div>
+        </div>
+      </details>
+
+    </section>
+
+    <!-- SQL Editor -->
+    <section class="panel" id="panel-sql">
+      <div class="sql-tab-strip" id="sql-tab-strip">
+        <button id="sql-tab-new" class="small">+</button>
+      </div>
+      <fieldset class="labelframe">
+        <legend>Connection</legend>
+        <div class="row">
+          <label>Active connection <select id="sql-conn"></select></label>
+          <button id="sql-refresh" class="small">Refresh connections</button>
+          <label class="checkbox"><input type="checkbox" id="sql-autocommit" /> Auto-commit</label>
+        </div>
+      </fieldset>
+      <fieldset class="labelframe">
+        <legend>Editor actions</legend>
+        <div class="row toolbar">
+          <button id="sql-run-cursor" class="primary">Execute at cursor (F5)</button>
+          <button id="sql-run-sel">Execute selected</button>
+          <button id="sql-run-all">Execute all</button>
+          <button id="sql-stop" class="danger">Stop Query</button>
+          <button id="sql-clear">Clear editor</button>
+          <button id="sql-load">Load query</button>
+          <button id="sql-save">Save query</button>
+          <button id="sql-format">Format SQL</button>
+          <button id="sql-autocomplete-toggle">Autocomplete: On</button>
+          <button id="sql-commit">Commit</button>
+          <button id="sql-rollback">Rollback</button>
+        </div>
+      </fieldset>
+      <textarea id="sql-input" spellcheck="false">SELECT 1;</textarea>
+      <input type="file" id="sql-load-file" accept=".sql,.txt,text/plain" hidden />
+      <div class="status" id="sql-status"></div>
+
+      <div class="row results-head" hidden id="sql-results-head">
+        <div class="result-tabs" id="sql-result-tabs"></div>
+        <span class="spacer"></span>
+        <button id="sql-result-copy" class="small">Copy All Data</button>
+        <button id="sql-result-sort-asc" class="small">Sort Ascending</button>
+        <button id="sql-result-sort-desc" class="small">Sort Descending</button>
+        <button id="sql-result-filter" class="small">Filter Column...</button>
+        <button id="sql-result-clear-filter" class="small">Clear Filter</button>
+        <button id="sql-clear-results" class="small">Clear All Results</button>
+        <button id="sql-export-csv" class="small">Export Data (CSV)</button>
+        <button id="sql-export-json" class="small">Export Data (JSON)</button>
+      </div>
+      <div class="results-wrap"><table class="grid" id="sql-grid"><thead></thead><tbody></tbody></table></div>
+
+      <details class="section" id="sql-history-sec">
+        <summary>Query history</summary>
+        <div class="section-body">
+          <div class="row"><button id="sql-history-clear" class="small">Clear history</button></div>
+          <ul class="history" id="sql-history"></ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- Objects -->
+    <section class="panel" id="panel-objects">
+      <fieldset class="labelframe">
+        <legend>Browse objects</legend>
+        <div class="row">
+          <label>Connection: <select id="obj-conn"></select></label>
+          <button id="obj-refresh" class="small">Refresh</button>
+          <button id="obj-import-jump" class="small">Import Data</button>
+        </div>
+        <div class="status" id="obj-info">Connect from the Connections tab to browse objects.</div>
+      </fieldset>
+
+      <div class="objects-browser">
+        <fieldset class="labelframe objects-types-pane">
+          <legend>Object types</legend>
+          <button id="obj-clear-results">Clear results</button>
+          <p class="muted">Choose an object type to browse.</p>
+          <div id="obj-type-buttons" class="object-type-buttons"></div>
+        </fieldset>
+
+        <fieldset class="labelframe objects-results-pane">
+          <legend>Results</legend>
+          <div class="row results-head">
+            <h3 id="obj-results-title">No objects loaded</h3>
+            <span class="spacer"></span>
+            <span class="muted" id="obj-results-count"></span>
+          </div>
+          <div class="row">
+            <label>Filter: <input id="obj-filter" placeholder="substring" /></label>
+            <button id="obj-filter-clear" class="small">Clear</button>
+          </div>
+          <div class="objects-results" id="obj-results">
+            <p class="muted">Choose an object type on the left to list database objects.</p>
+          </div>
+        </fieldset>
+      </div>
+
+      <template id="obj-table-card-template">
+        <details class="object-card">
+          <summary><span class="obj-card-name"></span></summary>
+          <div class="row toolbar">
+            <button class="obj-card-schema primary">Schema</button>
+            <button class="obj-card-sample">Load Sample Data</button>
+            <button class="obj-card-count">Row count</button>
+            <button class="obj-card-export">Export Data</button>
+          </div>
+          <div class="results-wrap"><table class="grid obj-card-detail"><thead></thead><tbody></tbody></table></div>
+        </details>
+      </template>
+
+      <template id="obj-simple-list-template">
+        <div class="results-wrap">
+          <table class="grid" id="obj-grid"><thead><tr><th>Object name</th></tr></thead><tbody></tbody></table>
+        </div>
+      </template>
+
+      <details class="section" id="obj-export-import">
+        <summary>Export / Import (server-side file paths)</summary>
+        <div class="section-body">
+          <div class="form">
+            <label>Export table <input id="obj-exp-table" placeholder="table" /></label>
+            <label>Output path (server) <input id="obj-exp-path" placeholder="/tmp/out.csv" /></label>
+            <label>Format
+              <select id="obj-exp-fmt"><option>csv</option><option>json</option></select>
+            </label>
+            <label>Limit (optional) <input id="obj-exp-limit" /></label>
+            <div class="actions full"><button id="obj-export" class="primary">Export Data</button></div>
+          </div>
+          <hr/>
+          <div class="form">
+            <label>Import CSV path (server) <input id="obj-imp-path" placeholder="/tmp/in.csv" /></label>
+            <label>Target table (optional) <input id="obj-imp-table" /></label>
+            <label class="checkbox"><input type="checkbox" id="obj-imp-create" checked /> Create table if missing</label>
+            <div class="actions full"><button id="obj-import" class="primary">Import CSV</button></div>
+          </div>
+        </div>
+      </details>
+      <div class="status" id="obj-status"></div>
+    </section>
+
+    <!-- Migration -->
+    <section class="panel" id="panel-migration">
+      <div class="row">
+        <h2>Data conversion and migration services</h2>
+        <span class="spacer"></span>
+        <button id="mig-settings" class="small">⚙ Migration Settings</button>
+      </div>
+      <fieldset class="labelframe">
+        <legend>Connections</legend>
+        <div class="row">
+          <label>Source connection <select id="mig-source"></select></label>
+          <button id="mig-load-tables" class="small">Load source tables</button>
+          <label>Target connection <select id="mig-target"></select></label>
+        </div>
+        <div class="row">
+          <label>Source database/schema <input id="mig-source-db" placeholder="(optional)" /></label>
+          <label>Target DB/schema <input id="mig-target-db" placeholder="(optional)" /></label>
+          <label>Prefix <input id="mig-prefix" /></label>
+          <label>Suffix <input id="mig-suffix" /></label>
+        </div>
+      </fieldset>
+
+      <details class="section" open>
+        <summary>Source tables</summary>
+        <div class="section-body">
+          <div class="row">
+            <label>Filter <input id="mig-table-filter" placeholder="substring" /></label>
+            <button id="mig-check-all" class="small">Check all</button>
+            <button id="mig-uncheck-all" class="small">Uncheck all</button>
+            <span class="muted" id="mig-table-count">0 selected</span>
+          </div>
+          <div class="checklist" id="mig-tables-list"></div>
+          <label class="full">…or type tables (comma-separated)
+            <input id="mig-tables" placeholder="public.users, public.orders" />
+          </label>
+        </div>
+      </details>
+
+      <details class="section" id="mig-options-sec" open>
+        <summary>Migration options (G1–G10)</summary>
+        <div class="section-body">
+          <div class="form">
+            <label class="checkbox"><input type="checkbox" id="mig-create-indexes" checked /> Create Indexes (with schema)</label>
+            <label class="checkbox"><input type="checkbox" id="mig-drop-if-exists" /> Drop Table If Exists (before schema conversion)</label>
+            <label>Type map (src:tgt,…) <input id="mig-type-map" placeholder="varchar2:text,int:decimal" /></label>
+            <label>Batch size <input id="mig-batch" placeholder="1000" /></label>
+            <label>Row limit (G1) <input id="mig-limit" /></label>
+            <label>WHERE (G1, single table) <input id="mig-where" /></label>
+            <label>Columns subset (G2, single) <input id="mig-columns" placeholder="id,name,email" /></label>
+            <label>Column rename map (G2) <input id="mig-column-map" placeholder="name:full_name" /></label>
+            <label>Overflow policy (G4)
+              <select id="mig-overflow"><option value="">(default)</option><option>fail</option><option>truncate</option><option>skip</option></select>
+            </label>
+            <label>Null policy (G6)
+              <select id="mig-null"><option value="">(default)</option><option>keep</option><option>empty_to_null</option><option>null_to_empty</option></select>
+            </label>
+            <label>Bool policy (G6)
+              <select id="mig-bool"><option value="">(default)</option><option>auto</option><option>int</option><option>true_false</option></select>
+            </label>
+            <label>Timezone policy (G7)
+              <select id="mig-tz"><option value="">(default)</option><option>preserve</option><option>naive</option><option>utc</option><option>target</option></select>
+            </label>
+            <label>Target timezone (G7) <input id="mig-target-tz" placeholder="Asia/Kolkata" /></label>
+            <label>Workers (parallel) <input id="mig-workers" placeholder="4" /></label>
+            <label>Report path (G10) <input id="mig-report" placeholder="/tmp/report.json" /></label>
+          </div>
+          <div class="row">
+            <label class="checkbox"><input type="checkbox" id="mig-parallel" /> Parallel transfer</label>
+            <label class="checkbox"><input type="checkbox" id="mig-continue" /> Continue on error (G3)</label>
+            <label class="checkbox"><input type="checkbox" id="mig-reset-seq" /> Reset sequences (G8)</label>
+            <label class="checkbox"><input type="checkbox" id="mig-checkpoint" /> Checkpoint/resume (G9)</label>
+          </div>
+        </div>
+      </details>
+
+      <div class="row toolbar">
+        <button id="mig-preview" class="primary">Preview Schema</button>
+        <button id="mig-rowcounts">Row counts</button>
+        <button id="mig-sample">Sample Data</button>
+        <button id="mig-validate">Validate (dry-run)</button>
+        <button id="mig-convert">Convert Schema (DDL)</button>
+        <button id="mig-apply">Apply DDL</button>
+        <button id="mig-transfer" class="primary">Transfer Data</button>
+        <button id="mig-compare-schema">Compare Schema</button>
+        <button id="mig-compare">Compare Data</button>
+        <label>Mode
+          <select id="mig-compare-mode">
+            <option value="sample">sample</option>
+            <option value="full">full</option>
+          </select>
+        </label>
+        <button id="mig-dump">Dump Schema</button>
+        <button id="mig-clear">Clear Preview</button>
+        <button id="mig-stop" class="danger" disabled>Stop</button>
+      </div>
+      <label class="full">Generated / editable DDL (for Apply)
+        <textarea id="mig-ddl" spellcheck="false" placeholder="-- Convert Schema fills this; Apply DDL runs it on the target"></textarea>
+      </label>
+      <pre class="output" id="mig-output"></pre>
+      <div class="status" id="mig-status"></div>
+    </section>
+
+    <!-- AI Query -->
+    <section class="panel" id="panel-ai">
+      <div class="row">
+        <h2>AI agent status</h2>
+        <span class="spacer"></span>
+        <button id="ai-settings-open" class="small">⚙ AI Settings</button>
+      </div>
+      <div class="row">
+        <label>Connection <select id="ai-conn"></select></label>
+        <label>Backend <select id="ai-backend"></select></label>
+        <button id="ai-backends" class="small">Refresh backends</button>
+        <span class="badge" id="ai-backend-state">—</span>
+        <span class="muted">Provider: <span id="ai-provider">—</span></span>
+        <span class="muted">Model: <span id="ai-model">—</span></span>
+      </div>
+      <div class="row">
+        <label id="ai-fallback-label">Fallback backend <select id="ai-fallback"></select></label>
+        <button id="ai-fallback-set" class="small">Set fallback</button>
+        <span class="muted" id="ai-fallback-hint">(failover + corrects wrong/failed SQL)</span>
+      </div>
+      <fieldset class="labelframe">
+        <legend>Sessions</legend>
+        <div class="row toolbar">
+          <label>Session <select id="ai-session"></select></label>
+          <button id="ai-session-new" class="small">New session</button>
+          <button id="ai-session-refresh" class="small">Refresh sessions</button>
+          <button id="ai-session-delete" class="small danger">Delete session</button>
+          <button id="ai-session-followup" class="small">Ask follow-up</button>
+          <button id="ai-session-cross" class="small">Cross-tab action</button>
+        </div>
+      </fieldset>
+      <label class="full">Question
+        <textarea id="ai-question" spellcheck="false" placeholder="Show top 10 customers by revenue"></textarea>
+      </label>
+      <div class="row toolbar">
+        <button id="ai-ask" class="primary">Generate SQL</button>
+        <button id="ai-exec" class="primary">Execute query</button>
+        <button id="ai-questions-file">Questions from file</button>
+        <label class="checkbox"><input type="checkbox" id="ai-use-rag" /> Use RAG</label>
+        <button id="ai-rag-index">Index RAG</button>
+        <button id="ai-train-current">Train LLM</button>
+        <button id="ai-stop" class="danger">Stop Query</button>
+        <button id="ai-explain">Explain query</button>
+        <button id="ai-optimize">Optimize</button>
+        <button id="ai-clear">Clear all</button>
+      </div>
+      <label class="full">Generated SQL
+        <textarea id="ai-sql" spellcheck="false"></textarea>
+      </label>
+      <div class="row toolbar">
+        <button id="ai-copy-sql">Copy SQL</button>
+        <button id="ai-edit-sql">Edit SQL</button>
+        <button id="ai-send-editor">Send to SQL Editor</button>
+        <button id="ai-review-rules">Write Review Rules</button>
+        <button id="ai-import-review">Import SQL for Review</button>
+        <button id="ai-review">Run Review</button>
+        <button id="ai-exec-rules">SQL execution rules</button>
+      </div>
+      <div class="row toolbar">
+        <button id="ai-refresh-conns" class="small">Refresh Connections</button>
+        <button id="ai-train-llm" class="small">Build or Train LLM</button>
+        <button id="ai-build-app" class="small">App Builder</button>
+        <button id="ai-rag-manage" class="small">RAG Manager</button>
+        <button id="ai-schema-clear" class="small">Clear Schema Cache</button>
+        <button id="ai-schema-show" class="small">Show Schema Sent to AI</button>
+        <label class="checkbox"><input type="checkbox" id="ai-auto-exec" /> Auto-execute SQL queries</label>
+        <label>SQL mode
+          <select id="ai-sql-mode">
+            <option value="strict_summary">Strict summary mode</option>
+            <option value="summary" selected>Summary mode</option>
+            <option value="open">Open mode</option>
+          </select>
+        </label>
+      </div>
+      <fieldset class="labelframe ai-results">
+        <legend>Results &amp; AI insights</legend>
+        <!-- Tab buttons are stamped from the shared spec (ai.resultTabs). -->
+        <div class="ai-result-tabs" id="ai-result-tabs" role="tablist"></div>
+        <div class="ai-result-panes">
+          <div class="ai-result-pane" id="ai-pane-results" data-tab="results">
+            <div class="results-wrap"><table class="grid" id="ai-grid"><thead></thead><tbody></tbody></table></div>
+          </div>
+          <div class="ai-result-pane" id="ai-pane-explanation" data-tab="explanation" hidden>
+            <div class="status" id="ai-explanation"></div>
+          </div>
+          <div class="ai-result-pane" id="ai-pane-optimization" data-tab="optimization" hidden>
+            <div class="status" id="ai-optimization"></div>
+          </div>
+          <div class="ai-result-pane" id="ai-pane-rag" data-tab="rag" hidden>
+            <div class="muted">Retrieved context ranked by relevance (only when 'Use RAG' is on):</div>
+            <div class="status" id="ai-rag-context"></div>
+          </div>
+          <div class="ai-result-pane" id="ai-pane-chat" data-tab="chat" hidden>
+            <div class="section-title">Conversation History</div>
+            <div class="ai-chat-log" id="ai-chat-log"></div>
+            <label class="checkbox"><input type="checkbox" id="ai-uninterrupted" /> Uninterrupted follow-ups</label>
+            <label class="full">Send Follow-up Message
+              <textarea id="ai-followup" spellcheck="false" placeholder="Add a WHERE clause for active users · Sort by date descending"></textarea>
+            </label>
+            <div class="row toolbar">
+              <button id="ai-followup-send" class="primary">Send Follow-up</button>
+              <button id="ai-chat-clear">Clear Chat</button>
+              <button id="ai-flag-query" class="warn">Flag incorrect query</button>
+              <button id="ai-flag-interp" class="warn">Flag incorrect interpretation</button>
+            </div>
+          </div>
+          <div class="ai-result-pane" id="ai-pane-review" data-tab="review" hidden>
+            <div class="status" id="ai-review-out"></div>
+          </div>
+        </div>
+      </fieldset>
+      <div class="status" id="ai-status"></div>
+
+      <details class="section" id="ai-settings-sec">
+        <summary>AI settings</summary>
+        <div class="section-body">
+          <div class="form">
+            <label>Default backend
+              <select id="ai-set-backend"></select>
+            </label>
+            <label class="checkbox"><input type="checkbox" id="ai-verify" checked /> Verify on set</label>
+            <div class="actions"><button id="ai-set-backend-btn" class="primary">Set backend</button></div>
+            <label class="checkbox"><input type="checkbox" id="ai-pii" /> Mask PII in prompts</label>
+            <div class="actions"><button id="ai-pii-btn">Save PII setting</button></div>
+            <div class="actions full">
+              <button id="ai-cache-info" class="small">Cache info</button>
+              <button id="ai-cache-clear" class="small danger">Clear cache</button>
+            </div>
+          </div>
+          <pre class="output" id="ai-settings-out"></pre>
+        </div>
+      </details>
+
+      <details class="section">
+        <summary>SQL &amp; review rules</summary>
+        <div class="section-body">
+          <label class="full">SQL execution rules (passed to session execute-sql)
+            <textarea id="ai-exec-rules-text" rows="3" spellcheck="false" placeholder="Only SELECT; block DDL; require LIMIT"></textarea>
+          </label>
+          <label class="full">Review rules (passed to Run Review)
+            <textarea id="ai-review-rules-text" rows="3" spellcheck="false" placeholder="Flag SELECT *; require indexed WHERE"></textarea>
+          </label>
+          <div class="row toolbar">
+            <button id="ai-session-save" class="small">Save sessions</button>
+            <button id="ai-session-load" class="small">Load sessions</button>
+            <button id="ai-session-exec-sql" class="small">Execute SQL (session rules)</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="section">
+        <summary>History</summary>
+        <div class="section-body">
+          <div class="row"><button id="ai-history-clear" class="small">Clear history</button></div>
+          <ul class="history" id="ai-history"></ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- App Builder (full parity with Tk) -->
+    <section class="panel" id="panel-app-builder">
+      <div class="row"><h2>App Builder — AiAppEngine</h2></div>
+      <p class="hint">Build from scratch, a database, or a codebase. Agentic builds stream live A/B/C session transcripts.</p>
+      <div class="ab-layout">
+        <div class="ab-form-col">
+          <div class="form ab-form" id="ab-form">
+            <label>App name <input id="ab-name" value="myapp" /></label>
+            <label>Mode
+              <select id="ab-mode">
+                <option value="from_scratch">from_scratch</option>
+                <option value="from_database">from_database</option>
+                <option value="from_codebase">from_codebase</option>
+              </select>
+            </label>
+            <label>Connection <select id="ab-conn"></select></label>
+            <label>Codebase path <input id="ab-codebase" placeholder="/path/to/code" /></label>
+            <label>DB variant
+              <select id="ab-db-variant">
+                <option value="application">application</option>
+                <option value="insights_admin">insights_admin</option>
+              </select>
+            </label>
+            <label>Codebase variant
+              <select id="ab-cb-variant">
+                <option value="predicted_app">predicted_app</option>
+                <option value="structure_metadata">structure_metadata</option>
+              </select>
+            </label>
+            <label>Unified variant
+              <select id="ab-variant">
+                <option value="application">application</option>
+                <option value="explorer">explorer</option>
+              </select>
+            </label>
+            <label>Build profile
+              <select id="ab-build-profile">
+                <option value="prototype">prototype</option>
+                <option value="full">full</option>
+              </select>
+            </label>
+            <label>Interaction
+              <select id="ab-interaction">
+                <option value="uninterrupted">uninterrupted</option>
+                <option value="auto" selected>auto</option>
+                <option value="interactive">interactive</option>
+              </select>
+            </label>
+            <label>Validation depth
+              <select id="ab-validation">
+                <option value="low_token">low_token</option>
+                <option value="thorough">thorough</option>
+              </select>
+            </label>
+            <label>Run port <input id="ab-port" value="8000" size="6" /></label>
+            <label class="full">Description
+              <textarea id="ab-desc" rows="2" placeholder="What the app should do"></textarea>
+            </label>
+            <label>Entities <input id="ab-entities" placeholder="customers, orders" /></label>
+            <div id="ab-features" class="ab-checks"></div>
+            <div id="ab-services" class="ab-checks"></div>
+            <label class="checkbox"><input type="checkbox" id="ab-use-ai" /> Use AI backend</label>
+            <label class="checkbox"><input type="checkbox" id="ab-mask-pii" /> Mask PII data</label>
+            <fieldset class="labelframe"><legend>Train LLM</legend>
+              <div id="ab-train-llm" class="ab-checks"></div>
+              <label>New model name <input id="ab-train-new" placeholder="optional" /></label>
+              <label>Engine <select id="ab-train-engine"></select></label>
+              <label class="checkbox"><input type="checkbox" id="ab-use-rag" /> Use RAG</label>
+              <label class="checkbox"><input type="checkbox" id="ab-index-rag" /> Index RAG</label>
+              <label>RAG strategy
+                <select id="ab-rag-strategy" disabled>
+                  <option value="index_first">index_first</option>
+                  <option value="parallel">parallel</option>
+                </select>
+              </label>
+              <label class="checkbox"><input type="checkbox" id="ab-mine-db" checked /> Mine DB queries (real data, validated)</label>
+              <label>Sample rows <input id="ab-sample-limit" type="number" value="5" min="1" max="1000" size="5" /></label>
+              <label class="checkbox"><input type="checkbox" id="ab-rich-train" /> Train from this build's data (schema/queries/insight, execution-validated)</label>
+              <span id="ab-rag-status" class="muted"></span>
+            </fieldset>
+            <label class="checkbox"><input type="checkbox" id="ab-deploy" /> Deploy schema (from_scratch)</label>
+          </div>
+          <div class="ab-btn-bar" id="ab-btn-bar">
+            <button id="ab-build" class="primary">Build</button>
+            <button id="ab-auto">Auto-build (AiQA)</button>
+            <button id="ab-agent">Agent build</button>
+            <button id="ab-train-build">Train from build</button>
+            <button id="ab-stop-build" disabled>Stop build</button>
+            <button id="ab-take-control" disabled>Take control</button>
+            <button id="ab-start-app" disabled>Start app</button>
+            <button id="ab-stop-app" disabled>Stop app</button>
+            <button id="ab-package" disabled>Approve &amp; package</button>
+            <button id="ab-delete" disabled>Delete build</button>
+          </div>
+          <div class="status" id="ab-workspace-path"></div>
+        </div>
+        <div class="ab-panels-col">
+          <fieldset class="labelframe"><legend>Build status</legend>
+            <pre class="ab-log" id="ab-status"></pre>
+          </fieldset>
+          <fieldset class="labelframe"><legend>Session A — builder</legend>
+            <pre class="ab-log" id="ab-log-builder"></pre>
+          </fieldset>
+          <div class="ab-bc-row">
+            <fieldset class="labelframe"><legend>Session B — answerer</legend>
+              <pre class="ab-log" id="ab-log-answerer"></pre>
+            </fieldset>
+            <fieldset class="labelframe"><legend>Session C — validator</legend>
+              <pre class="ab-log" id="ab-log-validator"></pre>
+            </fieldset>
+          </div>
+          <div class="row toolbar">
+            <label>Message to
+              <select id="ab-msg-target">
+                <option value="auto">auto (B→A)</option>
+                <option value="builder">builder</option>
+                <option value="answerer">answerer</option>
+                <option value="validator">validator</option>
+              </select>
+            </label>
+            <input id="ab-msg-text" placeholder="Message to session…" style="flex:1" />
+            <button id="ab-msg-send" disabled>Send</button>
+          </div>
+          <div id="ab-decision-box" class="ab-decision" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Monitoring -->
+    <section class="panel" id="panel-monitor">
+      <div class="row">
+        <h2>Monitoring</h2>
+        <span class="spacer"></span>
+        <button id="mon-settings" class="small">⚙ Monitor Settings</button>
+        <button id="mon-notifications" class="small">⚙ Notifications</button>
+        <button id="mon-threshold-settings" class="small">⚙ Alert Thresholds</button>
+      </div>
+      <div class="row toolbar">
+        <button id="mon-refresh-all" class="primary">Refresh now</button>
+        <label class="checkbox"><input type="checkbox" id="mon-auto-refresh" /> Auto refresh</label>
+        <button id="mon-thresholds" class="small">Thresholds</button>
+      </div>
+      <!-- Three sections mirror the Tk Monitoring tab: Server / Database / Cloud.
+           Each owns a saved-targets list + its own live metrics panel. "Select"
+           starts monitoring (many at once); "Remove" stops an active target or
+           deletes an idle saved one. Legends/labels are stamped from the spec. -->
+      <fieldset class="labelframe mon-section" id="mon-sec-server" data-section="server">
+        <legend>Server monitoring</legend>
+        <div class="mon-2col">
+          <div class="mon-list-col">
+            <select id="mon-server-list" class="mon-list" size="6"></select>
+            <div class="row toolbar">
+              <button id="mon-add-ssh" class="small" data-action="add">Add Connection</button>
+              <button id="mon-server-select" class="small" data-action="select">Select Server</button>
+              <button id="mon-server-remove" class="small" data-action="remove">Remove Server</button>
+              <button id="mon-server-refresh" class="small">Refresh</button>
+              <button id="mon-server-localos" class="small">Local OS</button>
+              <button id="mon-edit-target" class="small">Edit Target</button>
+              <button id="mon-test-target" class="small">Test Target</button>
+            </div>
+          </div>
+          <div class="mon-metrics-col">
+            <h3 id="mon-server-metrics-title">OS metrics</h3>
+            <div class="row toolbar mon-view-bar">
+              <button id="mon-server-show-graphs" class="small" data-view="show_graphs">Show Graphs</button>
+              <button id="mon-server-show-text" class="small" data-view="show_text">Show Text</button>
+              <button id="mon-server-clear-graphs" class="small" data-view="clear_graphs">Clear Graphs</button>
+            </div>
+            <table class="grid" id="mon-server-grid"><thead><tr><th>Target</th><th>Section</th><th>Metric</th><th>Value</th></tr></thead><tbody></tbody></table>
+            <pre class="output mon-graph-view" id="mon-server-graph" hidden></pre>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset class="labelframe mon-section" id="mon-sec-database" data-section="database">
+        <legend>Database Monitoring</legend>
+        <div class="mon-2col">
+          <div class="mon-list-col">
+            <select id="mon-database-list" class="mon-list" size="6"></select>
+            <div class="row toolbar">
+              <button id="mon-add-db" class="small" data-action="add">Add Database</button>
+              <button id="mon-database-select" class="small" data-action="select">Select Database</button>
+              <button id="mon-database-remove" class="small" data-action="remove">Remove Database</button>
+              <button id="mon-database-refresh" class="small">Refresh</button>
+            </div>
+          </div>
+          <div class="mon-metrics-col">
+            <h3 id="mon-database-metrics-title">Database Metrics</h3>
+            <div class="row toolbar mon-view-bar">
+              <button id="mon-database-show-graphs" class="small" data-view="show_graphs">Show Graphs</button>
+              <button id="mon-database-show-text" class="small" data-view="show_text">Show Text</button>
+              <button id="mon-database-clear-graphs" class="small" data-view="clear_graphs">Clear Graphs</button>
+            </div>
+            <table class="grid" id="mon-database-grid"><thead><tr><th>Target</th><th>Section</th><th>Metric</th><th>Value</th></tr></thead><tbody></tbody></table>
+            <pre class="output mon-graph-view" id="mon-database-graph" hidden></pre>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset class="labelframe mon-section" id="mon-sec-cloud" data-section="cloud">
+        <legend>Cloud Resource Monitoring</legend>
+        <div class="mon-2col">
+          <div class="mon-list-col">
+            <select id="mon-cloud-list" class="mon-list" size="6"></select>
+            <div class="row toolbar">
+              <button id="mon-add-cloud" class="small" data-action="add">Add Cloud Resource</button>
+              <button id="mon-cloud-select" class="small" data-action="select">Select Resource</button>
+              <button id="mon-cloud-remove" class="small" data-action="remove">Remove Resource</button>
+              <button id="mon-cloud-refresh" class="small">Refresh</button>
+            </div>
+          </div>
+          <div class="mon-metrics-col">
+            <h3 id="mon-cloud-metrics-title">Cloud Resource Metrics</h3>
+            <div class="row toolbar mon-view-bar">
+              <button id="mon-cloud-show-graphs" class="small" data-view="show_graphs">Show Graphs</button>
+              <button id="mon-cloud-show-text" class="small" data-view="show_text">Show Text</button>
+              <button id="mon-cloud-clear-graphs" class="small" data-view="clear_graphs">Clear Graphs</button>
+            </div>
+            <table class="grid" id="mon-cloud-grid"><thead><tr><th>Target</th><th>Section</th><th>Metric</th><th>Value</th></tr></thead><tbody></tbody></table>
+            <pre class="output mon-graph-view" id="mon-cloud-graph" hidden></pre>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset class="labelframe">
+        <legend>Alerts</legend>
+        <div class="row toolbar">
+          <button id="mon-alerts" class="small">Reload alerts</button>
+          <button id="mon-alerts-clear" class="small danger">Clear alerts</button>
+        </div>
+        <table class="grid" id="mon-alerts-grid"><thead><tr><th>Time</th><th>Severity</th><th>Source</th><th>Message</th></tr></thead><tbody></tbody></table>
+      </fieldset>
+      <details class="section" id="mon-thresholds-sec">
+        <summary>Alert thresholds</summary>
+        <div class="section-body">
+          <div class="row">
+            <label>Source filter
+              <select id="mon-thr-source"><option value="">all</option><option>db</option><option>os</option><option>aws</option><option>azure</option><option>gcp</option></select>
+            </label>
+            <label class="checkbox"><input type="checkbox" id="mon-thr-all" /> Include disabled</label>
+            <button id="mon-thr-load" class="small">Load thresholds</button>
+            <button id="mon-thr-edit" class="small">Edit selected threshold</button>
+            <button id="mon-thr-check" class="small">Check value…</button>
+          </div>
+          <table class="grid" id="mon-thr-grid"><thead><tr><th>Source</th><th>Metric</th><th>Warning</th><th>Critical</th><th>Enabled</th></tr></thead><tbody></tbody></table>
+        </div>
+      </details>
+      <div class="status" id="mon-status"></div>
+    </section>
+
+    <!-- Dashboard -->
+    <section class="panel" id="panel-dashboard">
+      <div class="row toolbar">
+        <h2>Dashboard</h2>
+        <span class="muted">Drag ⠿ header to rearrange</span>
+        <span class="spacer"></span>
+        <button id="dash-refresh" class="primary">Refresh</button>
+        <button id="dash-save-layout" class="small">Save layout</button>
+        <button id="dash-reset-layout">Reset layout</button>
+        <span class="badge" id="dash-status">—</span>
+      </div>
+      <div class="dashboard-grid" id="dash-card-grid" aria-label="Dashboard card layout"></div>
+      <details class="section">
+        <summary>Dashboard details</summary>
+        <div class="section-body">
+      <div class="two-col">
+        <div><h3>Core</h3><table class="grid" id="dash-core"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody></tbody></table></div>
+        <div><h3>Modules</h3><table class="grid" id="dash-modules"><thead><tr><th>Module</th><th>Installed</th><th>Ready</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <h3>Panels</h3>
+      <table class="grid" id="dash-panels"><thead><tr><th>Panel</th><th>Status</th><th>Detail</th></tr></thead><tbody></tbody></table>
+        </div>
+      </details>
+    </section>
+
+    <!-- Settings -->
+    <section class="panel" id="panel-settings">
+      <div class="row">
+        <h2>Settings</h2>
+        <span class="muted">Edit configuration & properties. Changes are saved to config.ini / properties.ini.</span>
+      </div>
+      <div class="row toolbar">
+        <button id="settings-save" class="primary">Save changes</button>
+        <button id="settings-reload" class="small">Reload</button>
+        <button id="settings-restore-defaults" class="small">Restore defaults…</button>
+        <button id="settings-clear-cache" class="danger">Clear caches</button>
+        <button id="settings-shortcuts" class="small">Shortcuts</button>
+      </div>
+      <div class="row toolbar">
+        <label>API key <input id="settings-api-key" placeholder="X-API-Key (if required)" /></label>
+        <button id="settings-save-key" class="small">Save API key</button>
+      </div>
+      <details class="section" id="settings-access-keys">
+        <summary>Access Keys</summary>
+        <div class="section-body">
+          <div class="row toolbar">
+            <label>Name <input id="apikey-name" placeholder="admin / automation / laptop" /></label>
+            <button id="apikey-create" class="small">Create key</button>
+            <button id="apikey-refresh" class="small">Refresh keys</button>
+          </div>
+          <table class="grid" id="apikey-grid">
+            <thead><tr><th>Key ID</th><th>Name</th><th>Created</th><th>Last used</th><th>Revoked</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+      <label>Filter <input id="settings-filter" placeholder="substring" /></label>
+      <table class="grid" id="settings-grid"><thead><tr><th>Group</th><th>Setting</th><th>Value</th><th>Description</th></tr></thead><tbody></tbody></table>
+      <pre class="output" id="settings-out"></pre>
+      <div class="status" id="settings-status"></div>
+    </section>
+  </main>
+
+  <!-- Reusable modal dialog (Load Saved, etc.) -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span id="modal-title">Dialog</span>
+        <button id="modal-close" class="small" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="app_builder_ui.js"></script>
+</body>
+</html>

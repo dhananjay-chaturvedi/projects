@@ -1,0 +1,363 @@
+# ================================================================
+# ai_query/config.ini.example — AI Query module configuration (EXAMPLE)
+# ================================================================
+# Owned by the AI Query module. Shipped as the default; a live config.ini is
+# created on first save (Monitor-style settings button, `dbtool ai config`, API).
+# ================================================================
+
+[ai]
+# Preferred backend: auto | claude | cursor | codex
+default_backend = auto
+# Fallback backend used (1) as failover when the primary is unreachable/unknown
+# and (2) as the corrector that repairs SQL the primary (e.g. a local LLM) got
+# wrong. Blank = no fallback. Accepts a backend name (claude/cursor/codex) or a
+# local model selection of the form local-llm::<model>. The UI's "Fallback"
+# dropdown overrides this at runtime (persisted to session/ai_state.json).
+fallback_backend =
+# Mask passwords/tokens in text sent to AI backends
+mask_pii = true
+max_sessions = 20
+# Fallback timeout (seconds) for the shared subprocess runner when a backend
+# does not pass an explicit per-call timeout.
+default_backend_timeout = 120
+# Extra directories scanned (after PATH) when resolving backend CLIs.
+cli_search_paths = ~/.local/bin,~/bin,~/.claude/local,/opt/homebrew/bin,/usr/local/bin,/usr/bin,/opt/local/bin
+
+[ai.claude]
+# Optional: full path to the claude binary. Leave blank to auto-resolve
+# (PATH, then ~/.local/bin, ~/bin, ~/.claude/local, Homebrew, /usr/local/bin).
+cli_path =
+cli_test_timeout = 5
+timeout = 120
+simple_query_timeout = 120
+complex_query_timeout = 180
+followup_timeout = 180
+max_output_tokens = 4000
+
+[ai.cursor]
+model = auto
+timeout = 60
+# `cursor agent --version` probe timeout (seconds)
+agent_version_timeout = 8
+# `cursor --version` fallback probe timeout (seconds)
+version_timeout = 5
+
+[ai.codex]
+# Optional: full path to the codex binary. Leave blank to auto-resolve
+# (PATH, then ~/.local/bin, ~/bin, Homebrew, /usr/local/bin).
+cli_path =
+model =
+timeout = 120
+# `codex --version` probe timeout (seconds)
+version_timeout = 5
+# API endpoint reachability ping timeout (seconds)
+connectivity_timeout = 3
+# Codex config file path. Leave blank to use ~/.codex/config.toml
+config_path =
+
+[ai.cache]
+max_tables_fetch = 50
+max_tables_detailed = 10
+max_tables_display = 100
+max_constraints_display = 50
+max_indexes_display = 50
+top_tables_count = 15
+max_users_roles_display = 15
+# Schema/context cache TTL in seconds. 0 = never expire (invalidate only on
+# reconnect or db_type change). A positive value forces a refresh once the
+# cached schema is older than this, so long-lived sessions pick up DDL changes.
+ttl_seconds = 0
+# Compare cached table list to live getTables on cache hit (cheap DDL drift check)
+schema_drift_check = false
+
+[ai.prompt]
+# Reversible prompt optimizations (default ON). Set false to restore legacy prompts.
+compact_schema = true
+consolidate_instructions = true
+dedup_followup_schema = true
+dedup_crosstab_schema = true
+# full_format_block: auto | always | never (DETAIL_SQL/INSIGHTS sections)
+full_format_block = auto
+progressive_escalation = true
+
+[ai.meter]
+enabled = true
+
+[ui.ai_query]
+auto_execute_ai_loop = false
+auto_execute_summary_sql = false
+auto_loop_max_iterations = 5
+default_sql_mode = summary
+sql_execution_rules =
+# Thread-pool size for cross-tab delegation
+cross_tab_max_workers = 4
+# Default timeout (seconds) for the "Run Review" SQL review action
+sql_review_timeout = 60
+
+[ai.limits]
+max_stored_sessions = 0
+# Fallback session cap used when max_stored_sessions is 0/disabled
+default_max_stored_sessions = 50
+# Conversation messages persisted to disk per session
+max_history_on_disk = 20
+# Filename for the persisted sessions registry (under the session dir)
+sessions_filename = sessions.json
+
+# ----------------------------------------------------------------
+# RAG — retrieval-augmented Generate SQL. Indexes the connected DB's
+# schema + your glossary/examples into a local vector store and injects
+# only the relevant objects into the prompt (the "Use RAG" toggle).
+# ----------------------------------------------------------------
+[ai.rag]
+enabled = true
+# embedding_provider: hash (zero-dependency, default) | sentence-transformers
+embedding_provider = hash
+embedding_model = all-MiniLM-L6-v2
+embedding_dim = 256
+max_tables = 500
+sample_values = true
+sample_limit = 5
+# lexical_alpha: blend of lexical overlap vs vector similarity (0..1) when use_rrf=false
+lexical_alpha = 0.3
+# use_rrf: reciprocal-rank fusion between vector and lexical rankings (recommended)
+use_rrf = true
+rrf_k = 60
+# query_expansion: fold matched glossary-term definitions into lexical matching
+query_expansion = true
+# entity_linking: map question nouns to indexed table/column names before retrieval
+entity_linking = true
+# --- Semantic schema cards ---
+# column_comments: index column comments/descriptions when the engine exposes them
+column_comments = true
+# enum_max_distinct: columns with <= this many distinct values become enum docs
+enum_max_distinct = 12
+# mask_samples: PII-mask sampled/enum values written into the index (also honours [ai] mask_pii)
+mask_samples = false
+# table_purpose: generate a one-line AI purpose per table during indexing (needs a backend)
+table_purpose = false
+# --- Reranking (optional quality tier) ---
+# rerank: re-score the top-N fused candidates (heuristic always; cross-encoder if installed)
+rerank = false
+rerank_top_n = 20
+rerank_model = cross-encoder/ms-marco-MiniLM-L-6-v2
+# --- Scale ---
+# ann: use a FAISS approximate-nearest-neighbour index when faiss is installed
+ann = false
+# --- Freshness / lifecycle ---
+# stale_after_days: index is reported stale in status once older than this
+stale_after_days = 7
+# --- Observability ---
+# log_retrievals: append per-ask retrieval hits + scores to a JSONL log
+log_retrievals = false
+top_k = 8
+# Skip or reduce RAG retrieval for simple questions
+gate_by_complexity = true
+# Document ingestion (uploaded reference files / pasted text).
+# Text formats (.txt/.md/.sql/.csv/.json/.rst/...) work out of the box;
+# .pdf needs `pip install pypdf`, .docx needs `pip install python-docx`.
+chunk_size = 1000
+chunk_overlap = 150
+max_doc_chars = 2000000
+# Codebase-folder ingestion (RAG Manager → Add Codebase)
+codebase_max_files = 500
+codebase_max_file_bytes = 512000
+
+# ----------------------------------------------------------------
+# App Builder — bounded DB profiling and codebase scanning (no heavy queries)
+# ----------------------------------------------------------------
+[ai.app_builder]
+db_sample_rows = 10
+db_profile_row_cap = 1000
+db_max_tables = 25
+profile_timeout = 30
+use_system_views = true
+# Row counts come from system catalogs (approximate, last-analyzed) when the
+# engine exposes them — no full-table aggregation. Exact COUNT(*) is only a
+# fallback for engines without a catalog stat (e.g. SQLite), gated by this flag.
+db_exact_row_counts = true
+# Deep per-column profiling (full-table NULL ratio + distinct counts) is heavy;
+# OFF by default. When off, approximate null/distinct come from sampled rows.
+db_deep_column_profiling = false
+# Tables interpreted per AI Query Assistant call (all in ONE reused session).
+# 10 = batch 10 tables/query; 1 = one table per query; 0 = all in one query.
+interpret_tables_per_query = 10
+codebase_max_files = 400
+codebase_max_depth = 4
+# Default build semantics across from_scratch/from_database/from_codebase.
+# build_profile: prototype (fast demonstrative app) | full (production-functional)
+default_build_profile = prototype
+# variant: application (real user-facing app) | explorer (metadata/insights view)
+default_variant = application
+# Post-build repair rounds when Sessions A/B/C disagree (auto-build only). 0 = off.
+max_finalize_repairs = 2
+# Host/port the packaged app is served on.
+host = 127.0.0.1
+default_port = 8000
+# Per-call agent/build subprocess timeout (seconds).
+agent_timeout = 300
+# Agentic build round caps: prototype vs full build profiles.
+max_rounds = 4
+full_max_rounds = 6
+# Build acceptance targets (0..1).
+target_score = 0.9
+target_coverage = 0.9
+# Total build wall-clock cap (seconds) and stagnation guards.
+max_wall_clock_seconds = 1800
+max_no_progress_rounds = 3
+max_validations = 12
+# Retained build-job TTL (seconds) and max retained jobs.
+job_ttl_seconds = 3600
+max_jobs = 32
+
+# ----------------------------------------------------------------
+# Local trainable NL->SQL LLM. engine: python (zero-dep, always works)
+# | numpy | pytorch (default when torch present) | ollama.
+# Optional deps for numpy/pytorch: pip install -r ai_query/requirements-llm.txt
+# ----------------------------------------------------------------
+[ai.llm]
+engine = pytorch
+engine_fallback = python
+# Model used by the "Local LLM (trained)" AI backend
+active_model = default
+# Continuously auto-train the local LLM on fallback-corrected query pairs when a
+# query the LLM generated fails to execute (or is flagged) against the CONNECTED
+# database. The correction is verified before being used as a training pair. The
+# UI's "Auto-train on corrected queries" checkbox overrides this at runtime.
+auto_fix_train = false
+# Template training mode for harvest/train corpus:
+#   concrete    = render templates with real object names (current behaviour)
+#   placeholder = train on delexicalized SQL using PH_* tokens (schema-agnostic)
+#   both        = emit concrete + placeholder pairs (recommended)
+template_mode = both
+# Runtime substitution when the local LLM emits PH_* placeholders:
+#   deterministic = match question entities to live schema + dry-run backtracking
+#   ai_fallback   = use the fallback AI backend when ambiguous
+#   off           = disable substitution (return SQL as generated)
+placeholder_resolution = deterministic
+context = 0
+max_context = 256
+emb_dim = 12
+hidden = 48
+epochs = 150
+batch_size = 32
+lr = 0.02
+seed = 1234
+min_loss = 0.05
+log_every = 10
+min_freq = 1
+max_new_tokens = 512
+temperature = 0.0
+no_repeat_ngram = 2
+repetition_penalty = 1.3
+top_k = 0
+# Stage 2 (pytorch nano-GPT) — sized for long multi-subquery SQL
+pt_block_size = 256
+pt_n_layer = 3
+pt_n_head = 4
+pt_n_embd = 128
+pt_dropout = 0.0
+pt_batch_size = 16
+pt_lr = 0.0003
+pt_max_iters = 1000
+pt_grad_clip = 1.0
+pt_device = auto
+# Stage 3 (ollama)
+ollama_host = http://localhost:11434
+ollama_model = qwen2.5-coder:1.5b
+ollama_timeout = 120
+# Ollama availability-probe timeout (seconds)
+ollama_health_timeout = 5
+# Max NL->SQL example pairs embedded in a generated Modelfile
+ollama_modelfile_max_pairs = 20
+# Prefix for the customized Ollama model name
+ollama_model_prefix = dbtool-
+# full = train collected pairs only; incremental = skip ledger-known questions
+# and union with the model's saved dataset.jsonl
+train_mode = full
+
+[ai.llm.eval]
+depth = lightweight
+dev_split = 0.15
+execution_accuracy = true
+soft_f1 = true
+esm = true
+benchmark_path =
+
+# Auto-harvest: build a large, validated NL->SQL corpus from the curated seed
+# corpus + an AI-generated question bank + backend generation + capture replay,
+# then train local models. Runs ONLY under an explicit Train-LLM action, so it
+# never changes live AI Query ask/follow-up behaviour. Off by default.
+[ai.llm.harvest]
+enabled = false
+use_curated = true
+use_captures = true
+use_followups = true
+mine_db = false
+complexity = basic,advanced,complex
+generated_questions = 40
+max_questions = 200
+sample_limit = 5
+max_tables = 40
+gen_workers = 4
+gen_timeout = 120
+gen_retries = 1
+retry_backlog = true
+max_consecutive_failures = 0
+# training depth: offline = templates/mining/captures only (no backend AI),
+# online = also ask the backend AI agent. Offline is the safe, fast default.
+training_depth = offline
+# concrete | placeholder | both — see [ai.llm] template_mode
+template_mode = both
+# Adaptive PyTorch capacity: scale model size with corpus size between the
+# pt_* floor (above) and these ceilings. Set adaptive = false to use the
+# fixed pt_* values regardless of corpus size.
+[ai.llm.capacity]
+adaptive = true
+max_n_layer = 6
+max_n_head = 8
+max_n_embd = 384
+max_block_size = 512
+max_iters_cap = 4000
+# corpus-size thresholds (pairs) at which capacity steps up
+small_pairs = 200
+medium_pairs = 1000
+large_pairs = 4000
+
+# Model versioning: a snapshot of the model artifacts is taken before every
+# (re)train so a failed/interrupted run can roll back and users can restore an
+# earlier version. keep = how many snapshots to retain per model (0 = unlimited).
+[ai.llm.versions]
+keep = 5
+
+[ai.llm.harvest.schedule]
+enabled = false
+# Start at any time of day; the run stops gracefully after duration_hours
+# (at a safe checkpoint — a model write is never interrupted).
+start_time = 01:00
+duration_hours = 4
+# legacy window_end is still honored if duration_hours is unset
+window_end =
+# single connection, or a comma list to span several (advanced training)
+connection =
+connections =
+train_mode = incremental
+# offline = template/mining only (no AI, self-contained); online = also AI
+training_depth = offline
+advanced_training = true
+multi_dialect = true
+train_new_name = default
+
+[ai.rag.reindex.schedule]
+# Automatically refresh stale / schema-drifted RAG indexes once per day.
+# Re-indexing is incremental: only changed schema objects are re-embedded,
+# so a scheduled run is cheap and never disrupts a live index.
+enabled = false
+# Daily window start; the run fires once inside the window.
+start_time = 02:00
+duration_hours = 1
+# legacy window_end is still honored if duration_hours is unset
+window_end =
+# comma list of connections to check; blank = every indexed connection
+connections =
+# force = re-index regardless of staleness/drift (otherwise fresh ones are skipped)
+force = false

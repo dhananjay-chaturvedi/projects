@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-label="DbAssistant logo">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#64B5F6"/>
+      <stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="44" height="44" rx="10" fill="url(#g)"/>
+  <ellipse cx="24" cy="14" rx="11" ry="4.5" fill="none" stroke="#fff" stroke-width="2.2"/>
+  <path d="M13 14 V24 a11 4.5 0 0 0 22 0 V14" fill="none" stroke="#fff" stroke-width="2.2"/>
+  <path d="M13 24 V34 a11 4.5 0 0 0 22 0 V24" fill="none" stroke="#fff" stroke-width="2.2"/>
+</svg>

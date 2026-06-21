@@ -1,0 +1,2 @@
+# Default requirements file (full tool). See setup/requirements-*.txt for slices.
+-r requirements-full.txt

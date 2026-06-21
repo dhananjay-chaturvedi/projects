@@ -1,0 +1,6 @@
+# Full DbManagementTool — all modules + API + optional UIs
+-r requirements-core.txt
+-r requirements-drivers.txt
+-r requirements-cloud.txt
+-r requirements-api.txt
+-r requirements-ui.txt

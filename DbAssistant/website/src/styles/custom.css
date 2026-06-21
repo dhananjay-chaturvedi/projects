@@ -1,0 +1,180 @@
+/*  Brand: DbAssistant
+ *  Primary blue is taken from the desktop UI (PRIMARY_LIGHT family).
+ *  Starlight uses HSL custom properties; we override accent shades here.
+ */
+
+:root {
+  /* Light theme tweaks */
+  --sl-color-accent-low: #e3f2fd;
+  --sl-color-accent: #2196f3;
+  --sl-color-accent-high: #0d47a1;
+
+  --sl-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --sl-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
+
+  --sl-content-width: 52rem;
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #0d47a1;
+  --sl-color-accent: #64b5f6;
+  --sl-color-accent-high: #bbdefb;
+}
+
+/* Landing page polish (only applied on pages that opt in via the
+   `splash` template; safe to live globally). */
+
+.dba-hero {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  padding: 4rem 1.5rem 3rem;
+  background: linear-gradient(
+    180deg,
+    var(--sl-color-accent-low),
+    transparent 70%
+  );
+  text-align: center;
+}
+
+.dba-hero h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.dba-hero p.tagline {
+  font-size: 1.125rem;
+  max-width: 36rem;
+  margin: 0 auto;
+  color: var(--sl-color-gray-2);
+}
+
+.dba-cta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.dba-cta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.dba-cta a.primary {
+  background: var(--sl-color-accent);
+  color: white;
+}
+
+.dba-cta a.primary:hover {
+  transform: translateY(-1px);
+  background: var(--sl-color-accent-high);
+}
+
+.dba-cta a.secondary {
+  border-color: var(--sl-color-gray-5);
+  color: var(--sl-color-text);
+}
+
+.dba-cta a.secondary:hover {
+  border-color: var(--sl-color-accent);
+  color: var(--sl-color-accent);
+}
+
+.dba-section {
+  padding: 3rem 1.5rem;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.dba-section h2 {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.dba-section p.lead {
+  color: var(--sl-color-gray-2);
+  margin-top: 0;
+}
+
+.dba-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  margin-top: 1.5rem;
+}
+
+.dba-card {
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--sl-color-gray-5);
+  background: var(--sl-color-bg-nav);
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.dba-card:hover {
+  border-color: var(--sl-color-accent);
+  transform: translateY(-2px);
+}
+
+.dba-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.dba-card p {
+  margin: 0;
+  color: var(--sl-color-gray-3);
+  font-size: 0.95rem;
+}
+
+.dba-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--sl-color-accent-low);
+  color: var(--sl-color-accent-high);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.dba-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  justify-content: center;
+  margin-top: 1rem;
+  color: var(--sl-color-gray-3);
+  font-size: 0.9rem;
+}
+
+.dba-logos span {
+  padding: 0.4rem 0.85rem;
+  border: 1px dashed var(--sl-color-gray-5);
+  border-radius: 0.4rem;
+}
+
+.dba-footer {
+  margin-top: 4rem;
+  padding: 2rem 1.5rem;
+  border-top: 1px solid var(--sl-color-gray-5);
+  text-align: center;
+  color: var(--sl-color-gray-3);
+  font-size: 0.9rem;
+}

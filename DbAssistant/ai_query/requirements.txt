@@ -1,0 +1,9 @@
+# AI Query module — adds to core. Install: bash install.sh --module ai
+fastapi>=0.110
+uvicorn>=0.29
+
+# Optional: the local trainable NL->SQL LLM works out of the box on the
+# pure-Python engine (zero deps). For the faster numpy / pytorch engines,
+# install the optional extras:  pip install -r ai_query/requirements-llm.txt
+# RAG also works with zero deps (hash embeddings); sentence-transformers is
+# optional and only needed for the "sentence-transformers" embedding provider.

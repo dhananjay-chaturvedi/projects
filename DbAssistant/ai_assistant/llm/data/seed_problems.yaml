@@ -1,0 +1,191 @@
+# Curated NL->SQL seed corpus for local-LLM training.
+#
+# Each problem maps MANY paraphrase prompts -> ONE canonical intent so every
+# phrasing becomes an exact-recall pair after training.
+#
+# Modes:
+#   template  - `sql` is a placeholder skeleton rendered against the real schema
+#               (reuses the {table}/{col}/{text_col}/{num_col} scheme from
+#               ai_assistant/llm/query_templates.py). Rendered SQL is live-validated.
+#   generate  - no SQL here; the canonical prompt is sent to the backend AI agent
+#               (Cursor) once, and the returned, validated SQL is attached to all
+#               paraphrases. Used for complex problems that are hard to template.
+#
+# Placeholders available in `prompts` and `sql` (template mode):
+#   {table} {table_label} {col_list} {col_list_label}
+#   {text_col} {text_col_q} {num_col} {num_col_q}
+#   {first_col} {first_col_q} {limit} {limit_clause} {limit_50_clause} {bounded_select}
+#
+# `requires` gates template rendering to tables that actually have the needed
+# column kind (text_col / num_col). `followups` are NL refinement turns the
+# harvester replays through the real follow-up thread.
+
+version: 1
+
+problems:
+  # ---------------------------------------------------------------- basic ----
+  - id: count_rows
+    complexity: basic
+    category: count
+    mode: template
+    sql: "SELECT COUNT(*) AS total FROM {table}"
+    prompts:
+      - "how many rows are in {table_label}?"
+      - "count of records in {table_label}"
+      - "total number of rows in {table_label}"
+      - "{table_label} row count"
+      - "how many {table_label} entries are there?"
+      - "give me the number of rows in {table_label}"
+
+  - id: sample_rows
+    complexity: basic
+    category: sample
+    mode: template
+    sql: "{bounded_select}"
+    prompts:
+      - "show a sample of rows from {table_label}"
+      - "give me a few {table_label} rows"
+      - "preview the {table_label} table"
+      - "show some data from {table_label}"
+      - "let me see the first rows of {table_label}"
+
+  - id: projection
+    complexity: basic
+    category: projection
+    mode: template
+    sql: "SELECT {col_list} FROM {table} {limit_clause}"
+    prompts:
+      - "show {col_list_label} from {table_label}"
+      - "list {col_list_label} of {table_label}"
+      - "select {col_list_label} from {table_label}"
+      - "display {col_list_label} in {table_label}"
+
+  - id: null_profile
+    complexity: basic
+    category: null_profile
+    mode: template
+    sql: "SELECT COUNT(*) AS null_{first_col} FROM {table} WHERE {first_col_q} IS NULL"
+    prompts:
+      - "how many rows have a null {first_col} in {table_label}?"
+      - "count missing {first_col} in {table_label}"
+      - "number of null {first_col} values in {table_label}"
+      - "how many {table_label} rows are missing {first_col}?"
+
+  # ------------------------------------------------------------- advanced ----
+  - id: distinct_values
+    complexity: advanced
+    category: distinct
+    mode: template
+    requires: [text_col]
+    sql: "SELECT COUNT(DISTINCT {text_col_q}) AS distinct_{text_col} FROM {table}"
+    prompts:
+      - "how many distinct {text_col} are in {table_label}?"
+      - "count unique {text_col} in {table_label}"
+      - "number of different {text_col} values in {table_label}"
+      - "how many unique {text_col} does {table_label} have?"
+
+  - id: group_by_count
+    complexity: advanced
+    category: group_by
+    mode: template
+    requires: [text_col]
+    sql: >-
+      SELECT {text_col_q} AS {text_col}_value, COUNT(*) AS n
+      FROM {table} GROUP BY {text_col_q} ORDER BY n DESC {limit_50_clause}
+    prompts:
+      - "count {table_label} grouped by {text_col}"
+      - "how many {table_label} per {text_col}?"
+      - "{table_label} count by {text_col}"
+      - "breakdown of {table_label} by {text_col}"
+      - "number of {table_label} for each {text_col}"
+    followups:
+      - "now only show the top 5"
+      - "now order the groups ascending"
+
+  - id: aggregate_stats
+    complexity: advanced
+    category: aggregate
+    mode: template
+    requires: [num_col]
+    sql: >-
+      SELECT MIN({num_col_q}) AS min_{num_col}, MAX({num_col_q}) AS max_{num_col},
+      AVG({num_col_q}) AS avg_{num_col}, SUM({num_col_q}) AS sum_{num_col} FROM {table}
+    prompts:
+      - "show min, max, average and sum of {num_col} in {table_label}"
+      - "aggregate stats of {num_col} for {table_label}"
+      - "summary statistics of {num_col} in {table_label}"
+      - "what are the min max avg and total of {num_col} in {table_label}?"
+
+  - id: top_n
+    complexity: advanced
+    category: top_n
+    mode: template
+    requires: [num_col]
+    sql: "SELECT * FROM {table} ORDER BY {num_col_q} DESC {limit_clause}"
+    prompts:
+      - "list the top rows of {table_label} by {num_col}"
+      - "show the highest {num_col} in {table_label}"
+      - "{table_label} ordered by {num_col} descending"
+      - "top {table_label} by {num_col}"
+    followups:
+      - "now only the top 5"
+      - "now show the lowest instead"
+
+  # -------------------------------------------------------------- complex ----
+  - id: group_aggregate
+    complexity: complex
+    category: group_aggregate
+    mode: template
+    requires: [num_col, text_col]
+    sql: >-
+      SELECT {text_col_q} AS {text_col}, SUM({num_col_q}) AS total_{num_col}
+      FROM {table} GROUP BY {text_col_q} ORDER BY total_{num_col} DESC {limit_50_clause}
+    prompts:
+      - "total {num_col} by {text_col} in {table_label}"
+      - "sum of {num_col} grouped by {text_col} for {table_label}"
+      - "{num_col} totals per {text_col} in {table_label}"
+      - "aggregate {num_col} by {text_col} in {table_label}"
+
+  - id: window_rank
+    complexity: complex
+    category: window
+    mode: template
+    requires: [num_col, text_col]
+    sql: >-
+      SELECT {text_col_q} AS {text_col}, {num_col_q} AS {num_col},
+      RANK() OVER (PARTITION BY {text_col_q} ORDER BY {num_col_q} DESC) AS rnk
+      FROM {table} {limit_clause}
+    prompts:
+      - "rank {table_label} rows by {num_col} within each {text_col}"
+      - "ranking of {num_col} per {text_col} in {table_label}"
+      - "rank {num_col} partitioned by {text_col} in {table_label}"
+
+  # ---- generate mode: backend grounds these against the live schema --------
+  - id: largest_table
+    complexity: complex
+    category: schema_insight
+    mode: generate
+    prompts:
+      - "which table has the most rows?"
+      - "what is the biggest table by row count?"
+      - "find the table with the highest number of records"
+
+  - id: foreign_keys
+    complexity: complex
+    category: schema_insight
+    mode: generate
+    prompts:
+      - "list all foreign key relationships in the database"
+      - "show how the tables are related"
+      - "what are the foreign keys between tables?"
+
+  - id: join_two_tables
+    complexity: complex
+    category: join
+    mode: generate
+    prompts:
+      - "join the two main tables and show related rows"
+      - "show records from related tables together"
+    followups:
+      - "now only show 10 rows"
+      - "now add a count grouped by a category column"

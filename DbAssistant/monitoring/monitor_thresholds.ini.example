@@ -1,0 +1,2325 @@
+# ================================================================
+# Monitor Thresholds Configuration
+# ================================================================
+# Each section defines threshold rules for one metric with three
+# severity levels: INFO, WARNING, and CRITICAL.
+#
+# Fields:
+#   critical    - value that triggers a CRITICAL alert  (red)
+#   warning     - value that triggers a WARNING alert   (yellow)
+#   info        - value that triggers an INFO alert     (blue)
+#   operator    - '>' (alert when value exceeds) or '<' (alert when below)
+#   unit        - display unit shown in alert messages
+#   window      - number of consecutive breaches before firing (sustained_breach)
+#   enabled     - true/false to toggle the rule without deleting it
+#   description - human-readable label used in alert messages
+#
+# Severity evaluation order: CRITICAL is checked first, then WARNING, then INFO.
+# Only the highest breached level fires per sample.
+#
+# For operator '>':  value > critical → CRITICAL  |  > warning → WARNING  |  > info → INFO
+# For operator '<':  value < critical → CRITICAL  |  < warning → WARNING  |  < info → INFO
+#
+# Section naming:
+#   [metric.<source>.<rule_id>]                         os / generic db (3 parts)
+#   [metric.db.<engine>.<rule_id>]                      per-engine db override (4 parts)
+#   [metric.<source>.<api>.<...path...>.<rule_id>]     cloud (4+ parts)
+#
+# DB lookups try the engine-specific section first (mysql, oracle, postgresql,
+# sqlite — MariaDB aliases to mysql) and fall back to the generic [metric.db.*]
+# default when no override exists.
+#
+# Cloud sections require:  metric_name = <exact API metric string>
+# rule_id is the stable key used by collectors; metric_name is what the
+# cloud API is called with (they may differ, e.g. GCP cpu_utilization vs
+# cloudsql.googleapis.com/database/cpu/utilization).
+#
+# Sources / APIs:
+#   os    - host metrics via SSH only (no api/path)
+#   db    - database metrics via SQL (generic + optional per-engine path)
+#   aws   - cloudwatch (AWS/RDS) | pi (Performance Insights)
+#   azure - azuremonitor (per Microsoft.<RP>/<resourceType> path)
+#   gcp   - cloudmonitoring (cloudsql.database.* path)
+# ================================================================
+
+
+# ----------------------------------------------------------------
+# OS  —  host-level metrics
+# ----------------------------------------------------------------
+
+[metric.os.cpu_utilization]
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Host CPU utilization
+
+[metric.os.free_memory_mb]
+critical    = 256
+warning     = 512
+info        = 1024
+operator    = <
+unit        = MB
+window      = 3
+enabled     = true
+description = Host free memory
+
+[metric.os.free_disk_gb]
+critical    = 2
+warning     = 5
+info        = 10
+operator    = <
+unit        = GB
+window      = 3
+enabled     = true
+description = Host free disk space
+
+[metric.os.disk_io_util_percent]
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Disk I/O utilization
+
+[metric.os.load_avg_1m]
+critical    = 28.0 #8
+warning     = 14.0 #4
+info        = 12.0 #2
+operator    = >
+unit        = ratio
+window      = 3
+enabled     = true
+description = 1-minute load average
+
+[metric.os.swap_used_mb]
+critical    = 2048
+warning     = 1024
+info        = 512
+operator    = >
+unit        = MB
+window      = 3
+enabled     = true
+description = Swap space used
+
+[metric.os.network_errors_per_sec]
+critical    = 50
+warning     = 10
+info        = 5
+operator    = >
+unit        = errors/sec
+window      = 3
+enabled     = true
+description = Network interface errors per second
+
+[metric.os.memory_utilization]
+critical    = 95
+warning     = 90
+info        = 80
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Host memory utilization percent
+
+[metric.os.disk_utilization]
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Host disk utilization percent
+
+[metric.os.net_errors]
+critical    = 50
+warning     = 10
+info        = 5
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Network interface errors (psutil; cumulative total)
+
+
+# ----------------------------------------------------------------
+# DB  —  generic database metrics (engine-agnostic defaults)
+# Per-engine overrides: [metric.db.mysql.*], [metric.db.oracle.*], etc.
+# ----------------------------------------------------------------
+
+[metric.db.active_connections]
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Active database connections
+
+[metric.db.connection_pool_wait_ms]
+critical    = 2000
+warning     = 500
+info        = 200
+operator    = >
+unit        = ms
+window      = 3
+enabled     = true
+description = Connection pool wait time
+
+[metric.db.slow_query_count]
+critical    = 200
+warning     = 50
+info        = 10
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Slow queries per minute
+
+[metric.db.query_time_ms]
+critical    = 10000
+warning     = 5000
+info        = 1000
+operator    = >
+unit        = ms
+window      = 3
+enabled     = true
+description = Individual query execution time
+
+[metric.db.read_latency_ms]
+critical    = 500
+warning     = 100
+info        = 50
+operator    = >
+unit        = ms
+window      = 3
+enabled     = true
+description = Read latency
+
+[metric.db.write_latency_ms]
+critical    = 500
+warning     = 100
+info        = 50
+operator    = >
+unit        = ms
+window      = 3
+enabled     = true
+description = Write latency
+
+[metric.db.replication_lag_s]
+critical    = 120
+warning     = 30
+info        = 10
+operator    = >
+unit        = seconds
+window      = 3
+enabled     = true
+description = Replication / replica lag
+
+[metric.db.deadlocks_per_min]
+critical    = 20
+warning     = 5
+info        = 1
+operator    = >
+unit        = count/min
+window      = 2
+enabled     = true
+description = Deadlock count per minute
+
+[metric.db.table_lock_wait_ratio]
+critical    = 0.3
+warning     = 0.1
+info        = 0.05
+operator    = >
+unit        = ratio
+window      = 3
+enabled     = true
+description = Table lock wait ratio (waits / total)
+
+[metric.db.cache_hit_ratio]
+critical    = 0.5
+warning     = 0.8
+info        = 0.9
+operator    = <
+unit        = ratio
+window      = 3
+enabled     = true
+description = Buffer/query cache hit ratio
+
+[metric.db.open_files]
+critical    = 95
+warning     = 80
+info        = 60
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Open file descriptors (pct of limit)
+
+[metric.db.temp_tables_per_sec]
+critical    = 500
+warning     = 100
+info        = 50
+operator    = >
+unit        = count/sec
+window      = 3
+enabled     = true
+description = Temporary tables created per second
+
+[metric.db.total_connections]
+critical    = 900
+warning     = 600
+info        = 300
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Total database connections (active + idle)
+
+[metric.db.max_connections]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count
+window      = 1
+description = Max connections setting (informational)
+
+[metric.db.connection_usage_pct]
+critical    = 90
+warning     = 75
+info        = 60
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Connection pool utilization percentage
+
+[metric.db.idle_connections]
+critical    = 500
+warning     = 200
+info        = 100
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Idle database connections
+
+[metric.db.threads_running]
+critical    = 100
+warning     = 50
+info        = 20
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Threads currently running (MySQL/MariaDB)
+
+[metric.db.queries_per_sec]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count/sec
+window      = 1
+description = Queries / executions per second (informational)
+
+[metric.db.uptime_sec]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = seconds
+window      = 1
+description = Database server uptime (informational)
+
+[metric.db.buffer_pool_used_mb]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = MB
+window      = 1
+description = InnoDB buffer pool used (informational)
+
+[metric.db.buffer_pool_total_mb]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = MB
+window      = 1
+description = InnoDB buffer pool total (informational)
+
+[metric.db.bp_read_requests]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count
+window      = 1
+description = Buffer pool read requests (used for hit ratio calc; hidden by default)
+
+[metric.db.bp_disk_reads]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count
+window      = 1
+description = Buffer pool disk reads (used for hit ratio calc; hidden by default)
+
+[metric.db.query_cache_hits]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count
+window      = 1
+description = Query cache hits (informational)
+
+[metric.db.net_bytes_recv]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = bytes
+window      = 1
+description = Total bytes received from clients (informational)
+
+[metric.db.net_bytes_sent]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = bytes
+window      = 1
+description = Total bytes sent to clients (informational)
+
+[metric.db.io_read_mb]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = MB
+window      = 1
+description = Cumulative I/O data read (informational)
+
+[metric.db.io_write_mb]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = MB
+window      = 1
+description = Cumulative I/O data written (informational)
+
+[metric.db.database_size_mb]
+enabled     = true
+operator    = >
+critical    = 51200
+warning     = 20480
+info        = 10240
+unit        = MB
+window      = 3
+description = Database size on disk
+
+[metric.db.row_lock_waits]
+critical    = 1000
+warning     = 200
+info        = 50
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = InnoDB row-level lock waits
+
+[metric.db.rollbacks]
+critical    = 1000
+warning     = 200
+info        = 50
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Transaction rollbacks
+
+[metric.db.active_locks]
+critical    = 500
+warning     = 100
+info        = 20
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Active database locks (PostgreSQL)
+
+[metric.db.waiting_locks]
+critical    = 50
+warning     = 10
+info        = 5
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Waiting (blocked) database locks
+
+[metric.db.blocks_read]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count
+window      = 1
+description = PostgreSQL blocks read from disk (hidden; used for cache ratio)
+
+[metric.db.blocks_hit]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count
+window      = 1
+description = PostgreSQL blocks served from cache (hidden; used for cache ratio)
+
+[metric.db.dead_tuples]
+critical    = 1000000
+warning     = 500000
+info        = 100000
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Dead tuples (PostgreSQL autovacuum health indicator)
+
+[metric.db.live_tuples]
+enabled     = true
+operator    = >
+critical    = 99999999
+warning     = 99999999
+info        = 99999999
+unit        = count
+window      = 1
+description = Live tuples (PostgreSQL; informational)
+
+[metric.db.sga_size_mb]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = MB
+window      = 1
+description = Oracle SGA size (informational)
+
+[metric.db.pga_used_mb]
+critical    = 4096
+warning     = 2048
+info        = 1024
+operator    = >
+unit        = MB
+window      = 3
+enabled     = true
+description = Oracle PGA memory used
+
+[metric.db.user_calls_per_sec]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count/sec
+window      = 1
+description = Oracle user calls per second (informational)
+
+[metric.db.db_block_gets]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count
+window      = 1
+description = Oracle DB block gets (informational)
+
+[metric.db.lock_wait_time_ms]
+critical    = 10000
+warning     = 2000
+info        = 500
+operator    = >
+unit        = ms
+window      = 3
+enabled     = true
+description = Oracle total lock wait time
+
+[metric.db.page_size_bytes]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = bytes
+window      = 1
+description = SQLite page size (informational; usually static)
+
+[metric.db.free_pages]
+enabled     = true
+operator    = <
+critical    = 10
+warning     = 50
+info        = 100
+unit        = count
+window      = 3
+description = SQLite free pages (low = fragmented file)
+
+[metric.db.wal_checkpoint]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = count
+window      = 1
+description = SQLite WAL checkpoint pages (informational)
+
+[metric.db.journal_mode]
+enabled     = true
+operator    = >
+critical    = 99999
+warning     = 99999
+info        = 99999
+unit        = text
+window      = 1
+description = SQLite journal mode (informational; text metric)
+
+
+# ================================================================
+# DB per-engine override sets
+# ================================================================
+# One section per metric the engine collector emits, namespaced by
+# db_type: [metric.db.<engine>.<rule_id>] where <engine> is one of
+# mysql | mariadb | oracle | postgresql | sqlite.
+#
+# Lookup order (see monitoring/db_metric_config.db_type_path + the
+# ThresholdChecker fallback): the engine-specific section wins; if it is
+# absent the generic [metric.db.<rule_id>] above is used.
+#
+# MySQL and MariaDB collect the same metrics but keep SEPARATE namespaces
+# so each engine can be tuned or disabled independently. Disable any rule
+# you don't want with `enabled = false`. Sentinel thresholds (99999 / large
+# values at all levels) mark display-only / cumulative counters that should
+# show in the UI but never raise an alert.
+# ----------------------------------------------------------------
+
+# ----------------------------------------------------------------
+# MySQL  —  [metric.db.mysql.*]
+# ----------------------------------------------------------------
+
+[metric.db.mysql.active_connections]
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Active connections (MySQL)
+
+[metric.db.mysql.total_connections]
+critical    = 900
+warning     = 600
+info        = 300
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Total connections, active + idle (MySQL)
+
+[metric.db.mysql.max_connections]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = max_connections setting (MySQL; informational)
+
+[metric.db.mysql.connection_usage_pct]
+critical    = 90
+warning     = 75
+info        = 60
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Connection pool utilization (MySQL)
+
+[metric.db.mysql.queries_per_sec]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count/sec
+window      = 1
+enabled     = true
+description = Questions counter (MySQL; cumulative/informational)
+
+[metric.db.mysql.slow_query_count]
+critical    = 200
+warning     = 50
+info        = 10
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Slow queries (MySQL)
+
+[metric.db.mysql.threads_running]
+critical    = 100
+warning     = 50
+info        = 20
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Threads currently running (MySQL)
+
+[metric.db.mysql.uptime_sec]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = seconds
+window      = 1
+enabled     = true
+description = Server uptime (MySQL; informational)
+
+[metric.db.mysql.buffer_pool_used_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = InnoDB buffer pool used (MySQL; informational)
+
+[metric.db.mysql.buffer_pool_total_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = InnoDB buffer pool total (MySQL; informational)
+
+[metric.db.mysql.buffer_pool_usage_pct]
+critical    = 95
+warning     = 85
+info        = 75
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = InnoDB buffer pool usage (MySQL)
+
+[metric.db.mysql.bp_read_requests]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Buffer pool read requests (MySQL; used for hit ratio)
+
+[metric.db.mysql.bp_disk_reads]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Buffer pool disk reads (MySQL; used for hit ratio)
+
+[metric.db.mysql.cache_hit_ratio]
+critical    = 0.5
+warning     = 0.8
+info        = 0.9
+operator    = <
+unit        = ratio
+window      = 3
+enabled     = true
+description = Buffer pool hit ratio (MySQL)
+
+[metric.db.mysql.query_cache_hits]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Query cache hits (MySQL; informational)
+
+[metric.db.mysql.net_bytes_recv]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = bytes
+window      = 1
+enabled     = true
+description = Bytes received from clients (MySQL; cumulative/informational)
+
+[metric.db.mysql.net_bytes_sent]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = bytes
+window      = 1
+enabled     = true
+description = Bytes sent to clients (MySQL; cumulative/informational)
+
+[metric.db.mysql.io_read_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = InnoDB data read (MySQL; cumulative/informational)
+
+[metric.db.mysql.io_write_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = InnoDB data written (MySQL; cumulative/informational)
+
+[metric.db.mysql.temp_tables_per_sec]
+critical    = 500
+warning     = 100
+info        = 50
+operator    = >
+unit        = count/sec
+window      = 3
+enabled     = true
+description = Temporary tables created (MySQL)
+
+[metric.db.mysql.table_lock_wait_ratio]
+critical    = 0.3
+warning     = 0.1
+info        = 0.05
+operator    = >
+unit        = ratio
+window      = 3
+enabled     = true
+description = Table lock waits (MySQL)
+
+[metric.db.mysql.row_lock_waits]
+critical    = 1000
+warning     = 200
+info        = 50
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = InnoDB row-level lock waits (MySQL)
+
+[metric.db.mysql.deadlocks_per_min]
+critical    = 20
+warning     = 5
+info        = 1
+operator    = >
+unit        = count/min
+window      = 2
+enabled     = true
+description = InnoDB deadlocks (MySQL)
+
+[metric.db.mysql.replication_lag_s]
+critical    = 120
+warning     = 30
+info        = 10
+operator    = >
+unit        = seconds
+window      = 3
+enabled     = true
+description = Replica lag (MySQL SHOW SLAVE STATUS)
+
+# ----------------------------------------------------------------
+# MariaDB  —  [metric.db.mariadb.*]
+# (same metric set as MySQL; tune/disable independently)
+# ----------------------------------------------------------------
+
+[metric.db.mariadb.active_connections]
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Active connections (MariaDB)
+
+[metric.db.mariadb.total_connections]
+critical    = 900
+warning     = 600
+info        = 300
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Total connections, active + idle (MariaDB)
+
+[metric.db.mariadb.max_connections]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = max_connections setting (MariaDB; informational)
+
+[metric.db.mariadb.connection_usage_pct]
+critical    = 90
+warning     = 75
+info        = 60
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Connection pool utilization (MariaDB)
+
+[metric.db.mariadb.queries_per_sec]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count/sec
+window      = 1
+enabled     = true
+description = Questions counter (MariaDB; cumulative/informational)
+
+[metric.db.mariadb.slow_query_count]
+critical    = 200
+warning     = 50
+info        = 10
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Slow queries (MariaDB)
+
+[metric.db.mariadb.threads_running]
+critical    = 100
+warning     = 50
+info        = 20
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Threads currently running (MariaDB)
+
+[metric.db.mariadb.uptime_sec]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = seconds
+window      = 1
+enabled     = true
+description = Server uptime (MariaDB; informational)
+
+[metric.db.mariadb.buffer_pool_used_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = InnoDB buffer pool used (MariaDB; informational)
+
+[metric.db.mariadb.buffer_pool_total_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = InnoDB buffer pool total (MariaDB; informational)
+
+[metric.db.mariadb.buffer_pool_usage_pct]
+critical    = 95
+warning     = 85
+info        = 75
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = InnoDB buffer pool usage (MariaDB)
+
+[metric.db.mariadb.bp_read_requests]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Buffer pool read requests (MariaDB; used for hit ratio)
+
+[metric.db.mariadb.bp_disk_reads]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Buffer pool disk reads (MariaDB; used for hit ratio)
+
+[metric.db.mariadb.cache_hit_ratio]
+critical    = 0.5
+warning     = 0.8
+info        = 0.9
+operator    = <
+unit        = ratio
+window      = 3
+enabled     = true
+description = Buffer pool hit ratio (MariaDB)
+
+[metric.db.mariadb.query_cache_hits]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Query cache hits (MariaDB; informational)
+
+[metric.db.mariadb.net_bytes_recv]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = bytes
+window      = 1
+enabled     = true
+description = Bytes received from clients (MariaDB; cumulative/informational)
+
+[metric.db.mariadb.net_bytes_sent]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = bytes
+window      = 1
+enabled     = true
+description = Bytes sent to clients (MariaDB; cumulative/informational)
+
+[metric.db.mariadb.io_read_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = InnoDB data read (MariaDB; cumulative/informational)
+
+[metric.db.mariadb.io_write_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = InnoDB data written (MariaDB; cumulative/informational)
+
+[metric.db.mariadb.temp_tables_per_sec]
+critical    = 500
+warning     = 100
+info        = 50
+operator    = >
+unit        = count/sec
+window      = 3
+enabled     = true
+description = Temporary tables created (MariaDB)
+
+[metric.db.mariadb.table_lock_wait_ratio]
+critical    = 0.3
+warning     = 0.1
+info        = 0.05
+operator    = >
+unit        = ratio
+window      = 3
+enabled     = true
+description = Table lock waits (MariaDB)
+
+[metric.db.mariadb.row_lock_waits]
+critical    = 1000
+warning     = 200
+info        = 50
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = InnoDB row-level lock waits (MariaDB)
+
+[metric.db.mariadb.deadlocks_per_min]
+critical    = 20
+warning     = 5
+info        = 1
+operator    = >
+unit        = count/min
+window      = 2
+enabled     = true
+description = InnoDB deadlocks (MariaDB)
+
+[metric.db.mariadb.replication_lag_s]
+critical    = 120
+warning     = 30
+info        = 10
+operator    = >
+unit        = seconds
+window      = 3
+enabled     = true
+description = Replica lag (MariaDB SHOW SLAVE STATUS)
+
+# ----------------------------------------------------------------
+# Oracle  —  [metric.db.oracle.*]
+# ----------------------------------------------------------------
+
+[metric.db.oracle.active_connections]
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Active sessions (Oracle v$session)
+
+[metric.db.oracle.total_connections]
+critical    = 900
+warning     = 600
+info        = 300
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Total sessions (Oracle v$session)
+
+[metric.db.oracle.idle_connections]
+critical    = 500
+warning     = 200
+info        = 100
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Inactive sessions (Oracle v$session)
+
+[metric.db.oracle.queries_per_sec]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count/sec
+window      = 1
+enabled     = true
+description = Executions per second (Oracle v$sysmetric; informational)
+
+[metric.db.oracle.user_calls_per_sec]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count/sec
+window      = 1
+enabled     = true
+description = User calls per second (Oracle v$sysmetric; informational)
+
+[metric.db.oracle.host_cpu_utilization]
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Host CPU utilization (Oracle v$sysmetric)
+
+[metric.db.oracle.db_cpu_time_ratio]
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Database CPU time ratio (Oracle v$sysmetric)
+
+[metric.db.oracle.sga_size_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = true
+description = SGA size (Oracle v$sga; informational)
+
+[metric.db.oracle.pga_used_mb]
+critical    = 4096
+warning     = 2048
+info        = 1024
+operator    = >
+unit        = MB
+window      = 3
+enabled     = true
+description = PGA memory used (Oracle v$pgastat)
+
+[metric.db.oracle.cache_hit_ratio]
+critical    = 0.5
+warning     = 0.8
+info        = 0.9
+operator    = <
+unit        = ratio
+window      = 3
+enabled     = true
+description = Buffer cache hit ratio (Oracle)
+
+[metric.db.oracle.io_read_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Physical reads (Oracle v$sysstat; cumulative/informational)
+
+[metric.db.oracle.io_write_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Physical writes (Oracle v$sysstat; cumulative/informational)
+
+[metric.db.oracle.db_block_gets]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = DB block gets (Oracle v$sysstat; cumulative/informational)
+
+[metric.db.oracle.table_lock_wait_ratio]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Enqueue waits (Oracle v$sysstat; cumulative/informational)
+
+[metric.db.oracle.lock_wait_time_ms]
+critical    = 10000
+warning     = 2000
+info        = 500
+operator    = >
+unit        = ms
+window      = 3
+enabled     = true
+description = Total lock wait time (Oracle v$session_wait)
+
+# ----------------------------------------------------------------
+# PostgreSQL  —  [metric.db.postgresql.*]
+# ----------------------------------------------------------------
+
+[metric.db.postgresql.active_connections]
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Active connections (PostgreSQL pg_stat_activity)
+
+[metric.db.postgresql.total_connections]
+critical    = 900
+warning     = 600
+info        = 300
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Total connections (PostgreSQL pg_stat_activity)
+
+[metric.db.postgresql.idle_connections]
+critical    = 500
+warning     = 200
+info        = 100
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Idle connections (PostgreSQL pg_stat_activity)
+
+[metric.db.postgresql.max_connections]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = max_connections setting (PostgreSQL; informational)
+
+[metric.db.postgresql.connection_usage_pct]
+critical    = 90
+warning     = 75
+info        = 60
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Connection pool utilization (PostgreSQL)
+
+[metric.db.postgresql.queries_per_sec]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Transactions committed (PostgreSQL; cumulative/informational)
+
+[metric.db.postgresql.rollbacks]
+critical    = 1000
+warning     = 200
+info        = 50
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Transactions rolled back (PostgreSQL)
+
+[metric.db.postgresql.shared_buffers_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = MB
+window      = 1
+enabled     = false
+description = shared_buffers setting (PostgreSQL; informational)
+
+[metric.db.postgresql.blocks_read]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Blocks read from disk (PostgreSQL; used for cache ratio)
+
+[metric.db.postgresql.blocks_hit]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Blocks served from cache (PostgreSQL; used for cache ratio)
+
+[metric.db.postgresql.cache_hit_ratio]
+critical    = 0.5
+warning     = 0.8
+info        = 0.9
+operator    = <
+unit        = ratio
+window      = 3
+enabled     = true
+description = Cache hit ratio (PostgreSQL)
+
+[metric.db.postgresql.database_size_mb]
+critical    = 51200
+warning     = 25600
+info        = 10240
+operator    = >
+unit        = MB
+window      = 3
+enabled     = true
+description = Database size (PostgreSQL)
+
+[metric.db.postgresql.dead_tuples]
+critical    = 1000000
+warning     = 500000
+info        = 100000
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Dead tuples (PostgreSQL autovacuum health)
+
+[metric.db.postgresql.live_tuples]
+critical    = 99999999
+warning     = 99999999
+info        = 99999999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Live tuples (PostgreSQL; informational)
+
+[metric.db.postgresql.active_locks]
+critical    = 500
+warning     = 100
+info        = 20
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Active (granted) locks (PostgreSQL pg_locks)
+
+[metric.db.postgresql.waiting_locks]
+critical    = 50
+warning     = 10
+info        = 5
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Waiting (blocked) locks (PostgreSQL pg_locks)
+
+[metric.db.postgresql.deadlocks_per_min]
+critical    = 20
+warning     = 5
+info        = 1
+operator    = >
+unit        = count/min
+window      = 2
+enabled     = true
+description = Deadlocks (PostgreSQL pg_stat_database)
+
+# ----------------------------------------------------------------
+# SQLite  —  [metric.db.sqlite.*]
+# (mostly static/informational; tune or disable as needed)
+# ----------------------------------------------------------------
+
+[metric.db.sqlite.database_size_mb]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = Page count (SQLite PRAGMA page_count; informational)
+
+[metric.db.sqlite.page_size_bytes]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = bytes
+window      = 1
+enabled     = true
+description = Page size (SQLite; informational, usually static)
+
+[metric.db.sqlite.free_pages]
+critical    = 10
+warning     = 50
+info        = 100
+operator    = <
+unit        = count
+window      = 3
+enabled     = true
+description = Free pages (SQLite; low = fragmented file)
+
+[metric.db.sqlite.journal_mode]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = text
+window      = 1
+enabled     = true
+description = Journal mode (SQLite; informational, text metric)
+
+[metric.db.sqlite.wal_checkpoint]
+critical    = 99999
+warning     = 99999
+info        = 99999
+operator    = >
+unit        = count
+window      = 1
+enabled     = true
+description = WAL checkpoint pages (SQLite; informational)
+
+# metric.os.* sections are defined above in the "OS — host-level metrics" block
+# OS metrics are collected via SSH server monitoring only — not via DB connections.
+
+
+# ================================================================
+# CLOUD PROVIDER METRICS
+# ================================================================
+# Section name encodes the full canonical address:
+#   [metric.<source>.<api>.<...path...>.<rule_id>]
+#
+# Examples:
+#   [metric.aws.cloudwatch.RDS.FreeableMemory]
+#   [metric.aws.pi.RDS.os_memory_free_avg]
+#   [metric.azure.azuremonitor.DBforMySQL.flexibleServers.cpu_percent]
+#   [metric.gcp.cloudmonitoring.cloudsql.database.cpu_utilization]
+#
+# Mandatory option for cloud sections:
+#   metric_name  - exact API metric name passed to the cloud API.
+#                  For AWS PI, GCP, etc., this is the verbatim string
+#                  expected by GetResourceMetrics / list_time_series.
+#
+# Derived from the section path (no need to set unless overriding):
+#   namespace          - AWS CloudWatch namespace (default "AWS/" + path[1])
+#   service_type       - AWS PI service type (default path[1])
+#   resource_provider  - Azure RP (default "Microsoft." + path[1] + "/" + path[2])
+#   resource_type      - GCP monitored resource type (default path[1] + "_" + path[2])
+# ================================================================
+
+
+# ----------------------------------------------------------------
+# AWS  —  CloudWatch (AWS/RDS namespace)
+# ----------------------------------------------------------------
+
+[metric.aws.cloudwatch.RDS.CPUUtilization]
+metric_name = CPUUtilization
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = RDS CPU utilization
+
+[metric.aws.cloudwatch.RDS.FreeableMemory]
+metric_name = FreeableMemory
+critical    = 268435456
+warning     = 536870912
+info        = 1073741824
+operator    = <
+unit        = bytes
+window      = 3
+enabled     = true
+description = RDS freeable memory
+
+[metric.aws.cloudwatch.RDS.SwapUsage]
+metric_name = SwapUsage
+critical    = 936870912
+warning     = 868435456
+operator    = >
+unit        = bytes
+window      = 3
+enabled     = true
+description = RDS swap usage
+
+[metric.aws.cloudwatch.RDS.FreeStorageSpace]
+metric_name = FreeStorageSpace
+critical    = 2147483648
+warning     = 5368709120
+info        = 10737418240
+operator    = <
+unit        = bytes
+window      = 3
+enabled     = true
+description = RDS free storage space
+
+[metric.aws.cloudwatch.RDS.DatabaseConnections]
+metric_name = DatabaseConnections
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = RDS active connections
+
+[metric.aws.cloudwatch.RDS.DiskQueueDepth]
+metric_name = DiskQueueDepth
+critical    = 128
+warning     = 64
+info        = 32
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = RDS disk queue depth
+
+[metric.aws.cloudwatch.RDS.ReadIOPS]
+metric_name = ReadIOPS
+critical    = 6000
+warning     = 3000
+info        = 1500
+operator    = >
+unit        = count/sec
+window      = 3
+enabled     = true
+description = RDS read IOPS
+
+[metric.aws.cloudwatch.RDS.WriteIOPS]
+metric_name = WriteIOPS
+critical    = 6000
+warning     = 3000
+info        = 1500
+operator    = >
+unit        = count/sec
+window      = 3
+enabled     = true
+description = RDS write IOPS
+
+[metric.aws.cloudwatch.RDS.ReadLatency]
+metric_name = ReadLatency
+critical    = 0.2
+warning     = 0.1
+info        = 0.05
+operator    = >
+unit        = seconds
+window      = 3
+enabled     = true
+description = RDS read latency
+
+[metric.aws.cloudwatch.RDS.WriteLatency]
+metric_name = WriteLatency
+critical    = 0.2
+warning     = 0.1
+info        = 0.05
+operator    = >
+unit        = seconds
+window      = 3
+enabled     = true
+description = RDS write latency
+
+[metric.aws.cloudwatch.RDS.ReadThroughput]
+metric_name = ReadThroughput
+critical    = 209715200
+warning     = 104857600
+info        = 52428800
+operator    = >
+unit        = bytes/sec
+window      = 3
+enabled     = false
+description = RDS read throughput (disabled by default)
+
+[metric.aws.cloudwatch.RDS.WriteThroughput]
+metric_name = WriteThroughput
+critical    = 209715200
+warning     = 104857600
+info        = 52428800
+operator    = >
+unit        = bytes/sec
+window      = 3
+enabled     = false
+description = RDS write throughput (disabled by default)
+
+[metric.aws.cloudwatch.RDS.ReplicaLag]
+metric_name = ReplicaLag
+critical    = 120
+warning     = 30
+info        = 10
+operator    = >
+unit        = seconds
+window      = 3
+enabled     = true
+description = RDS replica lag
+
+[metric.aws.cloudwatch.RDS.NetworkReceiveThroughput]
+metric_name = NetworkReceiveThroughput
+critical    = 209715200
+warning     = 104857600
+info        = 52428800
+operator    = >
+unit        = bytes/sec
+window      = 3
+enabled     = false
+description = RDS network receive throughput (disabled by default)
+
+[metric.aws.cloudwatch.RDS.NetworkTransmitThroughput]
+metric_name = NetworkTransmitThroughput
+critical    = 209715200
+warning     = 104857600
+info        = 52428800
+operator    = >
+unit        = bytes/sec
+window      = 3
+enabled     = false
+description = RDS network transmit throughput (disabled by default)
+
+
+# ----------------------------------------------------------------
+# AWS  —  Performance Insights (PI) — disabled by default
+# ----------------------------------------------------------------
+# These rules query PI directly (independent of the CloudWatch->PI
+# fallback that the AWS provider already does internally for
+# CPUUtilization, FreeableMemory, DiskQueueDepth). Enable individual
+# rules below to add explicit PI alerts.
+
+[metric.aws.pi.RDS.os_cpu_utilization_total_avg]
+metric_name = os.cpuUtilization.total.avg
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = RDS OS CPU utilization (PI)
+
+[metric.aws.pi.RDS.os_memory_free_avg]
+metric_name = os.memory.free.avg
+critical    = 268435456
+warning     = 536870912
+info        = 1073741824
+operator    = <
+unit        = bytes
+window      = 3
+enabled     = false
+description = RDS OS free memory (PI)
+
+[metric.aws.pi.RDS.os_disk_io_avg_queue_len_avg]
+metric_name = os.diskIO.avgQueueLen.avg
+critical    = 128
+warning     = 64
+info        = 32
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = RDS disk I/O queue length (PI)
+
+[metric.aws.pi.RDS.db_load_avg]
+metric_name = db.load.avg
+critical    = 8
+warning     = 4
+info        = 2
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = RDS DB load average — PI only
+
+[metric.aws.pi.RDS.db_sampledload_avg]
+metric_name = db.sampledload.avg
+critical    = 8
+warning     = 4
+info        = 2
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = RDS sampled DB load average — PI only
+
+
+# ----------------------------------------------------------------
+# Azure  —  Azure Monitor (Microsoft.* resource providers)
+# ----------------------------------------------------------------
+# Path segments: <api>.<RP-shortname>.<resourceType>.<metric>
+# Resource provider derived as "Microsoft.<RP-shortname>/<resourceType>".
+
+# ---- Microsoft.Sql/servers (Azure SQL Database) ----
+
+[metric.azure.azuremonitor.Sql.servers.cpu_percent]
+metric_name = cpu_percent
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Azure SQL Database CPU utilization
+
+[metric.azure.azuremonitor.Sql.servers.storage_percent]
+metric_name = storage_percent
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Azure SQL Database storage utilization
+
+[metric.azure.azuremonitor.Sql.servers.connection_failed]
+metric_name = connection_failed
+critical    = 50
+warning     = 10
+info        = 5
+operator    = >
+unit        = count
+window      = 2
+enabled     = true
+description = Azure SQL failed connection attempts
+
+[metric.azure.azuremonitor.Sql.servers.blocked_by_firewall]
+metric_name = blocked_by_firewall
+critical    = 20
+warning     = 5
+info        = 1
+operator    = >
+unit        = count
+window      = 2
+enabled     = true
+description = Azure SQL connections blocked by firewall
+
+[metric.azure.azuremonitor.Sql.servers.deadlock]
+metric_name = deadlock
+critical    = 20
+warning     = 5
+info        = 1
+operator    = >
+unit        = count
+window      = 2
+enabled     = true
+description = Azure SQL deadlocks per interval
+
+[metric.azure.azuremonitor.Sql.servers.dtu_consumption_percent]
+metric_name = dtu_consumption_percent
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure SQL DTU consumption (DTU pricing tier only)
+
+# ---- Microsoft.DBforMySQL/flexibleServers (current default for live monitoring) ----
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.cpu_percent]
+metric_name = cpu_percent
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Azure MySQL Flexible Server CPU utilization
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.memory_percent]
+metric_name = memory_percent
+critical    = 95
+warning     = 90
+info        = 80
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Azure MySQL Flexible Server memory utilization
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.active_connections]
+metric_name = active_connections
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Azure MySQL Flexible Server active connections
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.io_consumption_percent]
+metric_name = io_consumption_percent
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Azure MySQL Flexible Server I/O consumption
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.storage_percent]
+metric_name = storage_percent
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = true
+description = Azure MySQL Flexible Server storage utilization
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.replication_lag]
+metric_name = replication_lag
+critical    = 120
+warning     = 30
+info        = 10
+operator    = >
+unit        = seconds
+window      = 3
+enabled     = true
+description = Azure MySQL Flexible Server replica lag
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.slow_queries]
+metric_name = slow_queries
+critical    = 200
+warning     = 50
+info        = 10
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = Azure MySQL Flexible slow queries per interval
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.aborted_connections]
+metric_name = aborted_connections
+critical    = 50
+warning     = 10
+info        = 5
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = Azure MySQL Flexible aborted connections
+
+[metric.azure.azuremonitor.DBforMySQL.flexibleServers.Innodb_row_lock_waits]
+metric_name = Innodb_row_lock_waits
+critical    = 1000
+warning     = 200
+info        = 50
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = Azure MySQL Flexible InnoDB row-lock waits
+
+# ---- Microsoft.DBforMySQL/servers (Single Server — legacy) ----
+
+[metric.azure.azuremonitor.DBforMySQL.servers.cpu_percent]
+metric_name = cpu_percent
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure MySQL Single Server CPU utilization
+
+[metric.azure.azuremonitor.DBforMySQL.servers.memory_percent]
+metric_name = memory_percent
+critical    = 95
+warning     = 90
+info        = 80
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure MySQL Single Server memory utilization
+
+[metric.azure.azuremonitor.DBforMySQL.servers.active_connections]
+metric_name = active_connections
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = Azure MySQL Single Server active connections
+
+[metric.azure.azuremonitor.DBforMySQL.servers.storage_percent]
+metric_name = storage_percent
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure MySQL Single Server storage utilization
+
+# ---- Microsoft.DBforPostgreSQL/flexibleServers ----
+
+[metric.azure.azuremonitor.DBforPostgreSQL.flexibleServers.cpu_percent]
+metric_name = cpu_percent
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Flexible Server CPU utilization
+
+[metric.azure.azuremonitor.DBforPostgreSQL.flexibleServers.memory_percent]
+metric_name = memory_percent
+critical    = 95
+warning     = 90
+info        = 80
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Flexible Server memory utilization
+
+[metric.azure.azuremonitor.DBforPostgreSQL.flexibleServers.active_connections]
+metric_name = active_connections
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Flexible Server active connections
+
+[metric.azure.azuremonitor.DBforPostgreSQL.flexibleServers.storage_percent]
+metric_name = storage_percent
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Flexible Server storage utilization
+
+[metric.azure.azuremonitor.DBforPostgreSQL.flexibleServers.iops]
+metric_name = iops
+critical    = 6000
+warning     = 3000
+info        = 1500
+operator    = >
+unit        = count/sec
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Flexible Server IOPS
+
+# ---- Microsoft.DBforPostgreSQL/servers ----
+
+[metric.azure.azuremonitor.DBforPostgreSQL.servers.cpu_percent]
+metric_name = cpu_percent
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Single Server CPU utilization
+
+[metric.azure.azuremonitor.DBforPostgreSQL.servers.memory_percent]
+metric_name = memory_percent
+critical    = 95
+warning     = 90
+info        = 80
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Single Server memory utilization
+
+[metric.azure.azuremonitor.DBforPostgreSQL.servers.active_connections]
+metric_name = active_connections
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Single Server active connections
+
+[metric.azure.azuremonitor.DBforPostgreSQL.servers.storage_percent]
+metric_name = storage_percent
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure PostgreSQL Single Server storage utilization
+
+# ---- Microsoft.DBforMariaDB/servers ----
+
+[metric.azure.azuremonitor.DBforMariaDB.servers.cpu_percent]
+metric_name = cpu_percent
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure MariaDB Server CPU utilization
+
+[metric.azure.azuremonitor.DBforMariaDB.servers.memory_percent]
+metric_name = memory_percent
+critical    = 95
+warning     = 90
+info        = 80
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure MariaDB Server memory utilization
+
+[metric.azure.azuremonitor.DBforMariaDB.servers.active_connections]
+metric_name = active_connections
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = Azure MariaDB Server active connections
+
+[metric.azure.azuremonitor.DBforMariaDB.servers.storage_percent]
+metric_name = storage_percent
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure MariaDB Server storage utilization
+
+# ---- Microsoft.DocumentDB/databaseAccounts (Cosmos DB) ----
+
+[metric.azure.azuremonitor.DocumentDB.databaseAccounts.NormalizedRUConsumption]
+metric_name = NormalizedRUConsumption
+critical    = 95
+warning     = 80
+info        = 60
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Cosmos DB normalized RU consumption
+
+[metric.azure.azuremonitor.DocumentDB.databaseAccounts.ServerSideLatency]
+metric_name = ServerSideLatency
+critical    = 500
+warning     = 100
+info        = 50
+operator    = >
+unit        = ms
+window      = 3
+enabled     = false
+description = Cosmos DB server-side latency
+
+[metric.azure.azuremonitor.DocumentDB.databaseAccounts.ReplicationLatency]
+metric_name = ReplicationLatency
+critical    = 1000
+warning     = 500
+info        = 100
+operator    = >
+unit        = ms
+window      = 3
+enabled     = false
+description = Cosmos DB replication latency
+
+# ---- Microsoft.Cache/Redis ----
+
+[metric.azure.azuremonitor.Cache.Redis.percentProcessorTime]
+metric_name = percentProcessorTime
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure Redis CPU utilization
+
+[metric.azure.azuremonitor.Cache.Redis.usedmemorypercentage]
+metric_name = usedmemorypercentage
+critical    = 95
+warning     = 85
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure Redis memory utilization
+
+[metric.azure.azuremonitor.Cache.Redis.connectedclients]
+metric_name = connectedclients
+critical    = 5000
+warning     = 2000
+info        = 1000
+operator    = >
+unit        = count
+window      = 3
+enabled     = false
+description = Azure Redis connected clients
+
+[metric.azure.azuremonitor.Cache.Redis.serverLoad]
+metric_name = serverLoad
+critical    = 90
+warning     = 80
+info        = 70
+operator    = >
+unit        = percent
+window      = 3
+enabled     = false
+description = Azure Redis server load
+
+
+# ----------------------------------------------------------------
+# GCP  —  Cloud Monitoring (cloudsql.googleapis.com metric types)
+# ----------------------------------------------------------------
+# Path: <api>.<service>.<resource>.<rule_id>
+# Resource type derived as "<service>_<resource>" -> "cloudsql_database".
+# metric_name carries the verbatim GCP metric type URI.
+
+[metric.gcp.cloudmonitoring.cloudsql.database.cpu_utilization]
+metric_name = cloudsql.googleapis.com/database/cpu/utilization
+critical    = 0.90
+warning     = 0.80
+info        = 0.70
+operator    = >
+unit        = ratio
+window      = 3
+enabled     = true
+description = Cloud SQL CPU utilization
+
+[metric.gcp.cloudmonitoring.cloudsql.database.memory_utilization]
+metric_name = cloudsql.googleapis.com/database/memory/utilization
+critical    = 0.95
+warning     = 0.90
+info        = 0.80
+operator    = >
+unit        = ratio
+window      = 3
+enabled     = true
+description = Cloud SQL memory utilization
+
+[metric.gcp.cloudmonitoring.cloudsql.database.disk_utilization]
+metric_name = cloudsql.googleapis.com/database/disk/utilization
+critical    = 0.95
+warning     = 0.85
+info        = 0.70
+operator    = >
+unit        = ratio
+window      = 3
+enabled     = true
+description = Cloud SQL disk utilization
+
+[metric.gcp.cloudmonitoring.cloudsql.database.io_read_ops]
+metric_name = cloudsql.googleapis.com/database/disk/read_ops_count
+critical    = 6000
+warning     = 3000
+info        = 1500
+operator    = >
+unit        = count/sec
+window      = 3
+enabled     = true
+description = Cloud SQL disk read ops per second
+
+[metric.gcp.cloudmonitoring.cloudsql.database.io_write_ops]
+metric_name = cloudsql.googleapis.com/database/disk/write_ops_count
+critical    = 6000
+warning     = 3000
+info        = 1500
+operator    = >
+unit        = count/sec
+window      = 3
+enabled     = true
+description = Cloud SQL disk write ops per second
+
+[metric.gcp.cloudmonitoring.cloudsql.database.database_connections]
+metric_name = cloudsql.googleapis.com/database/network/connections
+critical    = 800
+warning     = 400
+info        = 200
+operator    = >
+unit        = count
+window      = 3
+enabled     = true
+description = Cloud SQL active connections
+
+[metric.gcp.cloudmonitoring.cloudsql.database.network_receive_bytes]
+metric_name = cloudsql.googleapis.com/database/network/received_bytes_count
+critical    = 209715200
+warning     = 104857600
+info        = 52428800
+operator    = >
+unit        = bytes/sec
+window      = 3
+enabled     = false
+description = Cloud SQL network bytes received
+
+[metric.gcp.cloudmonitoring.cloudsql.database.network_transmit_bytes]
+metric_name = cloudsql.googleapis.com/database/network/sent_bytes_count
+critical    = 209715200
+warning     = 104857600
+info        = 52428800
+operator    = >
+unit        = bytes/sec
+window      = 3
+enabled     = false
+description = Cloud SQL network bytes sent
+
+[metric.gcp.cloudmonitoring.cloudsql.database.replica_lag_seconds]
+metric_name = cloudsql.googleapis.com/database/replica_lag
+critical    = 120
+warning     = 30
+info        = 10
+operator    = >
+unit        = seconds
+window      = 3
+enabled     = true
+description = Cloud SQL replica lag

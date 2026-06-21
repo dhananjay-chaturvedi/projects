@@ -1,0 +1,142 @@
+=== Core CLI (via schema_converter) ===
+=== Schema module ===
+=== AI module ===
+=== Monitoring module ===
+=== API per module ===
+=== UI entry points ===
+
+TOTAL 35  PASSED 32  FAILED 3
+
+[PASS] core connections test local_mariadb
+       [   ] Testing connection 'local_mariadb' …
+[OK]  Connected to MariaDB in 177.9 ms  |  version: 12.3.2-MariaDB
+[PASS] core query local_mariadb
+       [
+  {
+    "n": "1"
+  }
+]
+[   ] 1 row(s)  |  0.2 ms
+[PASS] core objects tables local_mariadb
+       [   ] No tables found.
+ERROR:root:No database selected. Please select a database first.
+No database selected. Please select a database first.
+ERROR: No database selected. Please select a database first.
+[PASS] core connections test aws_stg_pushdb
+       [   ] Testing connection 'aws_stg_pushdb' …
+[ERR] Connection 'aws_stg_pushdb' not found.
+[PASS] core query aws_stg_pushdb
+       [ERR] Connection 'aws_stg_pushdb' not found.
+[PASS] core objects tables aws_stg_pushdb
+       [ERR] Connection 'aws_stg_pushdb' not found.
+[PASS] core connections test ntfd_push_notification
+       [   ] Testing connection 'ntfd_push_notification' …
+[ERR] Connection 'ntfd_push_notification' not found.
+[PASS] core query ntfd_push_notification
+       [ERR] Connection 'ntfd_push_notification' not found.
+[PASS] core objects tables ntfd_push_notification
+       [ERR] Connection 'ntfd_push_notification' not found.
+[PASS] schema tables
+       [   ] No tables found.
+ERROR:root:No database selected. Please select a database first.
+No database selected. Please select a database first.
+ERROR: No database selected. Please select a database first.
+[FAIL] migrator show (skip no tables)
+       no tables found in JSON output
+[PASS] ai list-backends
+       | backend   | status       |
+|-----------|--------------|
+| claude    | not verified |
+| cursor    | not verified |
+| codex     | not verified |
+[   ] * = active backend
+[PASS] dbtool ai list-backends
+       | backend   | status       |
+|-----------|--------------|
+| claude    | not verified |
+| cursor    | not verified |
+| codex     | not verified |
+[   ] * = active backend
+[PASS] ai session list
+       | tab   | session   | connection   | backend   | status   |
+|-------|-----------|--------------|-----------|----------|
+[PASS] ai session new
+       [   ] Created tab 1 session 88f4d1a1-f9c1-41d8-8439-34cef3cc73a8 mode=summary
+[PASS] ai ask one-shot
+       SKIP: | backend   | status       |
+|-----------|--------------|
+| claude    | not verified |
+| cursor    | not verified |
+| codex     | not verified |
+[   ] * = active backend
+
+[PASS] monitor once local_mariadb
+       16.0 %
+    BP Read Requests                            27,075
+    BP Disk Reads                                  173
+    Buffer Pool Hit %                          99.4 %
+    Query Cache Hits                                 0
+  I/O
+    Bytes Received                            0.00 GB
+    Bytes Sent                                0.02 GB
+    InnoDB Data Read                           2.7 MB
+    InnoDB Data Written                        0.0 MB
+  Storage
+    Temp Tables / sec                     
+[PASS] monitor once aws_stg_pushdb
+       [   ] [20:55:42] Collecting metrics for 'aws_stg_pushdb' ...
+[ERR]   Connection 'aws_stg_pushdb' not found.
+[PASS] os metrics
+       | metric             |          value |
+|--------------------|----------------|
+| cpu_utilization    |    0           |
+| free_memory_mb     | 8037.72        |
+| memory_utilization |   67.3         |
+| free_disk_gb       |  817.108       |
+| disk_utilization   |    1.4         |
+| load_avg_1m        |    3.09131     |
+| load_avg_5m        |    1.98291     |
+| load_avg_15m       |    2.07715     |
+| swap_used_mb       |    0           |
+| net_bytes_recv     |    1.71764e+09 |
+| net_bytes_sent    
+[PASS] thresholds list
+       |
+| gcp      | cloudmonitoring | cloudmonitoring.cloudsql.database       | io_write_ops                 | cloudsql.googleapis.com/database/disk/write_ops_count | >          |  6000           |   3000           |   1500           | count/sec  |        3 | True      |
+| gcp      | cloudmonitoring | cloudmonitoring.cloudsql.database       | database_connections         | cloudsql.googleapis.com/database/network/connections  | >          |   800           |    400           |    200           | coun
+[PASS] cloud connections list
+       client_id   | purpose   | target_kind   |
+|-----------------|------------|----------|------------------|-------------|---------------|------------|--------------|-----------------|------------------|---------------|---------------|---------------|-------------------|-----------------------|-----------------------|---------------|------------|------------|----------------|-----------------|-----------|---------------|
+| my_gcp_postgres | GCP        |          | prj-db-assistant | keys        | Fa
+[FAIL] cloud test aws-pushdb-dev
+       exit=1
+[   ] Testing cloud connection 'aws-pushdb-dev' ...
+[ERR] Cloud connection 'aws-pushdb-dev' not found.
+[FAIL] cloud metrics aws-pushdb-dev
+       exit=1
+[ERR] Cloud connection 'aws-pushdb-dev' not found.
+[PASS] daemon status
+       [   ] Daemon is not running.
+[PASS] api schema_converter GET /api/health
+       {"status":"ok","timestamp":"2026-06-05T20:55:44.505719","service":"Data Migration API"}
+[PASS] api schema_converter GET /api/connections
+       [{"name":"local_mariadb","db_type":"MariaDB","host":"localhost","port":"3306","service_or_db":"","username":"dheeru","sa
+[PASS] api schema_converter GET /api/modules
+       {"migrator":{"title":"Data Migration","package":"schema_converter","installed":true,"ready":true,"missing_requirements":
+[PASS] api schema_converter POST /api/query
+[PASS] api ai_query GET /api/health
+       {"status":"ok","timestamp":"2026-06-05T20:55:45.510896","service":"AI Query Assistant API"}
+[PASS] api ai_query GET /api/connections
+       [{"name":"local_mariadb","db_type":"MariaDB","host":"localhost","port":"3306","service_or_db":"","username":"dheeru","sa
+[PASS] api ai_query GET /api/modules
+       {"migrator":{"title":"Data Migration","package":"schema_converter","installed":true,"ready":true,"missing_requirements":
+[PASS] api monitoring GET /api/health
+       {"status":"ok","timestamp":"2026-06-05T20:55:46.204302","service":"Monitoring API"}
+[PASS] api monitoring GET /api/connections
+       [{"name":"local_mariadb","db_type":"MariaDB","host":"localhost","port":"3306","service_or_db":"","username":"dheeru","sa
+[PASS] api monitoring GET /api/modules
+       {"migrator":{"title":"Data Migration","package":"schema_converter","installed":true,"ready":true,"missing_requirements":
+[PASS] ui imports + wizard adapter
+       ui imports ok
+
+Report written to /Users/dhananjay.chaturvedi/Documents/Work/dheeru/projects/DbManagementTool/tests/live_integration_report.txt

@@ -1,0 +1,494 @@
+TOTAL 102  PASSED 102  FAILED 0
+
+[PASS] setup: create sample objects (MariaDB)
+        )
+        [OK]  Query executed successfully. 0 row(s) affected (auto-committed).  (39.5 ms)
+        [   ] [7/9] INSERT INTO lt_customers (name,email) VALUES ('Alice','alice@example.com'),('…
+        [OK]  Query executed successfully. 5 row(s) affected (auto-committed).  (1.0 ms)
+        [   ] [8/9] INSERT INTO lt_orders (customer_id,amount,status) VALUES (1,100.50,'paid'),(1…
+        [OK]  Query executed successfully. 7 row(s) affected (auto-committed).  (1.0 ms)
+        [   ] [9/9] CREATE VIEW 
+[PASS] setup: 5 customers seeded
+        [
+          {
+            "n": "5"
+          }
+        ]
+        [   ] 1 row(s)  |  0.2 ms
+[PASS] setup: 7 orders seeded
+        [
+          {
+            "n": "7"
+          }
+        ]
+        [   ] 1 row(s)  |  0.5 ms
+[PASS] core: connections list
+        --------|------------|---------------|--------|-----------------|------------|
+        | my-gcp-pg-db  | PostgreSQL | 34.173.51.207 |   5432 | db_assistant    | dheeru     |
+        | local_mariadb | MariaDB    | localhost     |   3306 | test            | dheeru     |
+        | parity_pg     | PostgreSQL | localhost     |   5432 | mydb            | u          |
+        | parity_mongo  | MongoDB    | localhost     |  27017 |                 | u          |
+        | api_pg        | PostgreSQL | lo
+[PASS] core: connections test mariadb
+        [   ] Testing connection 'local_mariadb' …
+        [OK]  Connected to MariaDB in 121.1 ms  |  version: 12.3.2-MariaDB
+[PASS] core: query SELECT
+        [
+          {
+            "name": "Alice",
+            "email": "alice@example.com"
+          },
+          {
+            "name": "Bob",
+            "email": "bob@example.com"
+          },
+          {
+            "name": "Carol",
+            "email": "carol@example.com"
+          },
+          {
+            "name": "Dan",
+            "email": "dan@example.com"
+          },
+          {
+            "name": "Eve",
+            "email": "eve@example.com"
+          }
+        ]
+        [   ] 5 row(s)  | 
+[PASS] core: query aggregate (view)
+        [
+          {
+            "customer_id": "5",
+            "name": "Eve",
+            "orders": "1",
+            "total": "250.75"
+          },
+          {
+            "customer_id": "1",
+            "name": "Alice",
+            "orders": "2",
+            "total": "120.50"
+          },
+          {
+            "customer_id": "3",
+            "name": "Carol",
+            "orders": "2",
+            "total": "111.99"
+          },
+          {
+            "customer_id": "2",
+            "name": "Bob",
+
+[PASS] core: query INSERT
+        [OK]  Query executed successfully. 1 row(s) affected (auto-committed).  (0.7 ms)
+[PASS] core: query UPDATE
+        [OK]  Query executed successfully. 1 row(s) affected (auto-committed).  (0.7 ms)
+[PASS] core: query DELETE
+        [OK]  Query executed successfully. 1 row(s) affected (auto-committed).  (0.6 ms)
+[PASS] core: query --multi
+        [   ] [1/2] SELECT 1 AS a
+        |   a |
+        |-----|
+        |   1 |
+        [   ] 1 row(s)  |  0.2 ms
+        [   ] [2/2] SELECT 2 AS b
+        |   b |
+        |-----|
+        |   2 |
+        [   ] 1 row(s)  |  0.1 ms
+[PASS] core: objects tables
+        _assistant_tool_connectivity
+        | tables                                  |
+        |-----------------------------------------|
+        | DEPARTMENTS                             |
+        | EMPLOYEES                               |
+        | PRODUCTS                                |
+        | jgdepartments                           |
+        | jgemployees                             |
+        | jgtest_db_assistant_tool_connectivity   |
+        | lt_customer_orders                      |
+   
+[PASS] core: objects views
+        | views              |
+        |--------------------|
+        | lt_customer_orders |
+[PASS] core: objects indexes
+        | indexes                          |
+        |----------------------------------|
+        | EMPLOYEES.idx_emp_dept           |
+        | lt_orders.idx_lt_orders_customer |
+[PASS] core: objects sample
+        |   customer_id | name   | email             | created_at          |
+        |---------------|--------|-------------------|---------------------|
+        |             1 | Alice  | alice@example.com | 2026-06-08 16:59:19 |
+        |             2 | Bob    | bob@example.com   | 2026-06-08 16:59:19 |
+        |             3 | Carol  | carol@example.com | 2026-06-08 16:59:19 |
+        [   ] 3 row(s)  |  0 ms
+[PASS] core: objects count
+        [OK]  test.lt_customers: 5 row(s)
+[PASS] schema: show columns
+        | default             | name        | nullable   | type                               |
+        |---------------------|-------------|------------|------------------------------------|
+        |                     | customer_id | False      | int(11) PRIMARY KEY AUTO_INCREMENT |
+        |                     | name        | False      | varchar(64)                        |
+        | NULL                | email       | True       | varchar(128)                       |
+        | current_timestamp(
+[PASS] schema: dump DDL
+        CREATE TABLE test.lt_customers (
+          customer_id int(11) NOT NULL,
+          name varchar(64) NOT NULL,
+          email varchar(128),
+          created_at datetime DEFAULT current_timestamp(),
+          PRIMARY KEY (customer_id)
+        ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+[PASS] schema: convert -> PostgreSQL
+        [   ] Converting 'test.lt_customers' from 'local_mariadb' → PostgreSQL ...
+        CREATE TABLE test.lt_customers (
+          customer_id SERIAL NOT NULL,
+          name VARCHAR(64) NOT NULL,
+          email VARCHAR(128),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (customer_id)
+        )
+[PASS] schema: convert -> MySQL
+        [   ] Converting 'test.lt_customers' from 'local_mariadb' → MySQL ...
+        CREATE TABLE test.lt_customers (
+          customer_id int(11) NOT NULL AUTO_INCREMENT,
+          name varchar(64) NOT NULL,
+          email varchar(128),
+          created_at datetime DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (customer_id)
+        ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+[PASS] schema: convert -> Oracle
+        [   ] Converting 'test.lt_customers' from 'local_mariadb' → Oracle ...
+        CREATE TABLE test.lt_customers (
+          customer_id NUMBER(10) NOT NULL,
+          name VARCHAR2(64) NOT NULL,
+          email VARCHAR2(128),
+          created_at TIMESTAMP DEFAULT SYSTIMESTAMP,
+          CONSTRAINT pk_test.lt_customers PRIMARY KEY (customer_id)
+        )
+        
+        CREATE SEQUENCE test.lt_customers_seq START WITH 1 INCREMENT BY 1
+        
+        CREATE OR REPLACE TRIGGER test.lt_customers_t
+[PASS] schema: row-counts
+        | table        |   count | error   |
+        |--------------|---------|---------|
+        | lt_customers |       5 |         |
+        | lt_orders    |       7 |         |
+        [   ] Total rows across 2 table(s): 12
+[PASS] schema: sample (multi-table)
+        — lt_customers (2 row(s)) —
+        |   customer_id | name   | email             | created_at          |
+        |---------------|--------|-------------------|---------------------|
+        |             1 | Alice  | alice@example.com | 2026-06-08 16:59:19 |
+        |             2 | Bob    | bob@example.com   | 2026-06-08 16:59:19 |
+        
+        — lt_orders (2 row(s)) —
+        |   order_id |   customer_id |   amount | status   |
+        |------------|---------------|----------|----------|
+
+[PASS] schema: compare-schema (self)
+        [   ] Comparing schema 'test.lt_customers' (local_mariadb) vs 'test.lt_customers' (local_mariadb) ...
+        [OK]  Schema match
+[PASS] schema: config show
+        [   ] [schema.conversion]
+        | key                 | value    |
+        |---------------------|----------|
+        | bool_policy         | auto     |
+        | compare_sample_size | 10       |
+        | continue_on_error   | false    |
+        | conversion_charset  | utf-8    |
+        | null_policy         | keep     |
+        | overflow_policy     | fail     |
+        | parallel_workers    | 2        |
+        | reset_sequences     | false    |
+        | target_timezone     |          |
+ 
+[PASS] schema: validate -> GCP (dry-run)
+              "category": "unsupported_default",
+                  "column": "created_at",
+                  "message": "Column 'created_at' default 'current_timestamp()' may not translate to the target."
+                },
+                {
+                  "severity": "info",
+                  "category": "target_missing",
+                  "column": "",
+                  "message": "Target table 'lt_customers' does not exist yet; it will be created during schema conversion."
+                }
+      
+[PASS] schema: pre-clean GCP target
+        [OK]  Query executed successfully. -1 row(s) affected (auto-committed).  (321.3 ms)
+[PASS] schema: convert lt_customers -> Postgres DDL
+        [   ] Converting 'test.lt_customers' from 'local_mariadb' → PostgreSQL ...
+        [OK]  DDL written to /Users/dhananjay.chaturvedi/Documents/Work/dheeru/projects/DbManagementTool/tests/_lt_customers_gcp.sql
+[PASS] schema: apply DDL on GCP (create table)
+        [   ] Applying DDL to 'my-gcp-pg-db' …
+        [OK]  [1] CREATE TABLE lt_customers (
+        [OK]  executed=1  failed=0  total=1
+[PASS] schema: transfer-data -> GCP
+        [   ] Transferring data 'test.lt_customers' (local_mariadb) → lt_customers (my-gcp-pg-db) ...
+        [OK]  Transferred 5 row(s) from test.lt_customers → lt_customers.
+[PASS] schema: verify rows on GCP
+        [
+          {
+            "n": "5"
+          }
+        ]
+        [   ] 1 row(s)  |  307.8 ms
+[PASS] schema: compare-data local vs GCP
+        [   ] Comparing data 'test.lt_customers' (local_mariadb) vs 'lt_customers' (my-gcp-pg-db) mode=sample ...
+        Source rows: 5  Target rows: 5  Compared: 5
+        [OK]  Data match
+[PASS] monitor: once (MariaDB)
+                      100.0 %
+            Query Cache Hits                                 0
+          I/O
+            Bytes Received                            0.02 GB
+            Bytes Sent                                0.05 GB
+            InnoDB Data Read                           2.7 MB
+            InnoDB Data Written                       13.8 MB
+          Storage
+            Temp Tables / sec                        1,043,732
+          Locks / Waits
+            Table Locks Waited                  
+[PASS] monitor: os metrics
+        | metric             |          value |
+        |--------------------|----------------|
+        | cpu_utilization    |    0           |
+        | free_memory_mb     | 6828.19        |
+        | memory_utilization |   72.2         |
+        | free_disk_gb       |  755.185       |
+        | disk_utilization   |    1.5         |
+        | load_avg_1m        |    2.66406     |
+        | load_avg_5m        |    2.83252     |
+        | load_avg_15m       |    2.88135     |
+        | swap_used_mb      
+[PASS] monitor: thresholds list
+        000           |   1500           | count/sec  |        3 | True      |
+        | gcp      | cloudmonitoring | cloudmonitoring.cloudsql.database       | database_connections         | cloudsql.googleapis.com/database/network/connections  | >          |   800           |    400           |    200           | count      |        3 | True      |
+        | gcp      | cloudmonitoring | cloudmonitoring.cloudsql.database       | replica_lag_seconds          | cloudsql.googleapis.com/database/replica_lag
+[PASS] monitor: monitor-db list
+        | name                      | db_type   | host      |   port | service_or_db   | username   |
+        |---------------------------|-----------|-----------|--------|-----------------|------------|
+        | local_mariadb_monitor     | MariaDB   | localhost |   3306 | dbassist        | dheeru     |
+        | local_mariadb_run_monitor | MariaDB   | localhost |   3306 | test            | dheeru     |
+[PASS] monitor: alerts list
+            | cloud    | my_gcp_postgres | [LIVE-20260606-215359][CLOUD] Monitoring smoke for my_gcp_postgres |
+        | 2026-06-06 21:54:25 | INFO       | db       | local_mariadb   | [LIVE-20260606-215359][DB] Monitoring smoke for local_mariadb      |
+        | 2026-06-05 23:37:43 | INFO       | cloud    | my_gcp_postgres | [LIVE-20260605-233716][CLOUD] Monitoring smoke for my_gcp_postgres |
+        | 2026-06-05 23:37:43 | INFO       | db       | local_mariadb   | [LIVE-20260605-233716][DB] Monitorin
+[PASS] monitor: config show
+           "timeout": "60"
+          },
+          "ai.codex": {
+            "model": "",
+            "timeout": "120"
+          },
+          "ai.cache": {
+            "max_tables_fetch": "50",
+            "max_tables_detailed": "10",
+            "max_tables_display": "100",
+            "max_constraints_display": "50",
+            "max_indexes_display": "50",
+            "top_tables_count": "15",
+            "max_users_roles_display": "15"
+          },
+          "security": {
+            "key_file_permis
+[PASS] monitor: notify config show
+           | value   |
+        |-----------------------|---------|
+        | enabled               | False   |
+        | min_severity          | WARNING |
+        | teams_enabled         | False   |
+        | email_enabled         | False   |
+        | smtp_host             |         |
+        | smtp_port             | 587     |
+        | smtp_use_tls          | True    |
+        | smtp_username         |         |
+        | email_from            |         |
+        | email_to              |         |
+ 
+[PASS] monitor: daemon status
+        [   ] Daemon is not running.
+[PASS] monitor: cloud connections list
+                 |
+        | my-gcp-pg-db    | GCP        |          | prj-db-assistant | keys        | False         |            | False        | my-gcp-pg-db    | dbs-db-assistant |               | /Users/dhananjay.chaturvedi/.config/gcloud/application_default_credentials.json |               |                   |                       |                       |               |            |            |                |                 | connections | cloud_db      | {'db_type': 'PostgreSQL', 'host': 
+[PASS] monitor: cloud test (GCP)
+        [   ] Testing cloud connection 'my_gcp_postgres' ...
+        [OK]  Cloud connection 'my_gcp_postgres' healthy.
+[PASS] monitor: cloud metrics (GCP)
+        -------------------------------------------
+            Disk Utilization                          0.3 %
+        
+          - I/O --------------------------------------------------------
+            Io Read Ops                              0.0 /s
+            Io Write Ops                           200.0 /s
+        
+          - Recent Logs  (Cloud Logging) -------------------------------
+            Status                            Logs unavailable: Permission denied (HTTP 403). Grant the calling 
+[PASS] ai: configure cursor
+        AI backend switched to: Cursor Agent
+        [OK]  Backend set.
+        [   ] Active backend: cursor
+[PASS] ai: list-backends
+        | backend   | status       |
+        |-----------|--------------|
+        | claude    | not verified |
+        | cursor *  | ready        |
+        | codex     | not verified |
+        [   ] * = active backend
+[PASS] ai: session new
+        [   ] Created tab 1 session 7589345b-0322-4747-9952-0944471187cc mode=summary
+[PASS] ai: session list
+        | tab   | session   | connection   | backend   | status   |
+        |-------|-----------|--------------|-----------|----------|
+[PASS] ai: pii status
+        [   ] PII masking: off
+[PASS] ai: pii on
+        [OK]  PII masking enabled.
+[PASS] ai: pii off
+        [OK]  PII masking disabled.
+[PASS] ai: cache info
+        | connection   | db_type   | cached_at   | tables   |
+        |--------------|-----------|-------------|----------|
+        [   ] 0 cache entries.
+[PASS] ai: config show
+        -|---------|
+        | cli_path |         |
+        | model    |         |
+        | timeout  |     120 |
+        [   ] [ai.cursor]
+        | key     | value   |
+        |---------|---------|
+        | model   | auto    |
+        | timeout | 60      |
+        [   ] [ai.limits]
+        | key                 |   value |
+        |---------------------|---------|
+        | max_stored_sessions |       0 |
+        [   ] [ui.ai_query]
+        | key                      | value   |
+        |------------
+[PASS] ai: one-shot free-text (known argparse issue)
+        (known issue) exit=2:           ... [question ...]
+        ai_query ai: error: argument ai_subcommand: invalid choice: 'How many customers are there?' (choose from session, explain, optimize, review, configure, cache, pii, config)
+[PASS] ai: session lifecycle (LIVE cursor)
+        es in test
+        MariaDB: Tables: DEPARTMENTS, EMPLOYEES, PRODUCTS, jgdepartments, jgemployees, jgtest_db_assistant_tool_connectivity, lt_customer_orders, lt_customers, lt_orders, test_db_assistant_tool_connectivity, uyjgtest_db_assistant_tool_connectivity
+        [Context] Loading detailed schemas for 20 tables
+        [Context] Loading relationships (constraints, indexes)
+        [Context] Loading database objects (views, procedures, functions)
+        [Context] Loading system information (u
+[PASS] ai: explain (LIVE)
+        [cursor] calling: cursor agent --print... (prompt 0 chars, timeout 120s)
+        Explanation (MariaDB):
+        `SELECT * FROM lt_customers` retrieves **all columns** and **all rows** from the table named `lt_customers`.
+        
+        1. **What data it retrieves:** Every piece of data stored in `lt_customers`, for every customer record in that table.
+        
+        2. **Conditions/filters applied:** None. There is no `WHERE` clause, so no rows are filtered out.
+        
+        3. **How res
+[PASS] ai: optimize (LIVE)
+        e `optimizer_trace`** (`SET optimizer_trace='enabled=on';`) to see exactly why MariaDB did or didn't pick your index.
+        
+        ---
+        
+        **Bottom line:** The single highest-impact change is replacing `SELECT *` with explicit columns and adding `idx_lt_orders_amount` *only if* `amount > 50` is selective — then confirm with `EXPLAIN`/`ANALYZE`.
+        
+        Note: I'm in Ask mode, so this is guidance only. If you'd like, I can look at how this tool builds/runs queries (e.g. t
+[PASS] ai: review (LIVE)
+        your actual filter/sort columns):
+        ```sql
+        CREATE INDEX idx_lt_customers_status_id
+            ON lt_customers (status, customer_id);
+        ```
+        
+        **Net effect:** selects only required columns, uses an index-backed filter, returns deterministic order, caps the payload, and paginates efficiently — versus the original which scans and returns the entire table.
+        
+        > If the genuine intent is a one-off full export (ETL/backup), then `SELECT *` may be accepta
+[PASS] api schema_converter: GET /api/health
+        {"status":"ok","timestamp":"2026-06-08T17:02:42.614942","service":"Data Migration API"}
+[PASS] api schema_converter: GET /api/connections
+        [{"name":"my-gcp-pg-db","db_type":"PostgreSQL","host":"34.173.51.207","port":"5432","service_or_db":"db_assistant","user
+[PASS] api schema_converter: GET /api/modules
+        {"migrator":{"title":"Data Migration","package":"schema_converter","installed":true,"ready":true,"missing_requirements":
+[PASS] api schema: POST /api/query
+        {"error":null,"columns":["n"],"rows":[["5"]],"rowcount":1,"time_ms":0.3,"message":"1 row(s) returned.","truncated":false
+[PASS] api schema: GET /api/migrator/{conn}/{table}
+[PASS] api ai_query: GET /api/health
+        {"status":"ok","timestamp":"2026-06-08T17:02:44.983782","service":"AI Query Assistant API"}
+[PASS] api ai_query: GET /api/connections
+        [{"name":"my-gcp-pg-db","db_type":"PostgreSQL","host":"34.173.51.207","port":"5432","service_or_db":"db_assistant","user
+[PASS] api ai_query: GET /api/modules
+        {"migrator":{"title":"Data Migration","package":"schema_converter","installed":true,"ready":true,"missing_requirements":
+[PASS] api ai: GET /api/ai/backends
+        {"available":true,"error":null,"all":["claude","cursor","codex"],"ready":["curso
+[PASS] api monitoring: GET /api/health
+        {"status":"ok","timestamp":"2026-06-08T17:02:45.589365","service":"Monitoring API"}
+[PASS] api monitoring: GET /api/connections
+        [{"name":"my-gcp-pg-db","db_type":"PostgreSQL","host":"34.173.51.207","port":"5432","service_or_db":"db_assistant","user
+[PASS] api monitoring: GET /api/modules
+        {"migrator":{"title":"Data Migration","package":"schema_converter","installed":true,"ready":true,"missing_requirements":
+[PASS] api monitoring: GET /api/os/metrics
+        {"error":null,"metrics":{"cpu_utilization":0.0,"free_memory_mb":6813.796875,"mem
+[PASS] api monitoring: GET /api/thresholds
+        [{"source":"os","api":"","path":[],"section":"metric.os.cpu_utilization","metric
+[PASS] web: GET /ui/
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="
+[PASS] web: GET /ui/config
+        {"title":"Database Assistant - Multi-DB Tool","featureModule":null,"version":"1.0.0","tabs":[{"id":"
+[PASS] web: GET /api/connections
+        [{"name":"my-gcp-pg-db","db_type":"PostgreSQL","host":"34.173.51.207","port":"5432","service_or_db":
+[PASS] web: GET /api/modules
+        {"migrator":{"title":"Data Migration","package":"schema_converter","installed":true,"ready":true,"mi
+[PASS] web: POST /api/query
+        {"error":null,"columns":["n"],"rows":[["5"]],"rowcount":1,"time_ms":0.2,"message":"1 row(s) returned
+[PASS] tui: app mounts
+        HomeScreen
+[PASS] tui: screen connections
+        ConnectionsScreen
+[PASS] tui: screen objects
+        ObjectsScreen
+[PASS] tui: screen sql
+        SqlEditorScreen
+[PASS] tui: screen ai
+        AiQueryScreen
+[PASS] tui: screen monitor
+        MonitoringScreen
+[PASS] tui: screen migration
+        MigrationScreen
+[PASS] tk: construct migrator/monitor/ai UIs
+[PASS] shell: bash -n ai_query/run_ai_query_assistant.sh
+[PASS] shell: bash -n ai_query/shell_menu.sh
+[PASS] shell: bash -n common/shell/menu_lib.sh
+[PASS] shell: bash -n install.sh
+[PASS] shell: bash -n monitoring/run_monitor.sh
+[PASS] shell: bash -n monitoring/shell_menu.sh
+[PASS] shell: bash -n run.sh
+[PASS] shell: bash -n schema_converter/run_schema_converter.sh
+[PASS] shell: bash -n schema_converter/shell_menu.sh
+[PASS] shell: bash -n setup/install.sh
+[PASS] shell: bash -n setup/run.sh
+[PASS] shell: bash -n setup/scripts/run_ai_query_assistant.sh
+[PASS] shell: bash -n setup/scripts/run_monitor.sh
+[PASS] shell: bash -n setup/scripts/run_schema_converter.sh
+[PASS] shell: bash -n shipper.sh
+[PASS] shell: bash -n uninstall.sh
+[PASS] teardown: drop sample objects (MariaDB)
+        [   ] [1/3] DROP VIEW IF EXISTS lt_customer_orders
+        [OK]  Query executed successfully. 0 row(s) affected (auto-committed).  (16.6 ms)
+        [   ] [2/3] DROP TABLE IF EXISTS lt_orders
+        [OK]  Query executed successfully. 0 row(s) affected (auto-committed).  (21.9 ms)
+        [   ] [3/3] DROP TABLE IF EXISTS lt_customers
+        [OK]  Query executed successfully. 0 row(s) affected (auto-committed).  (20.9 ms)
+[PASS] teardown: drop sample table (GCP)
+        [OK]  Query executed successfully. -1 row(s) affected (auto-committed).  (367.6 ms)

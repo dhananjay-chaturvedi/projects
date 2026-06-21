@@ -1,0 +1,13 @@
+# Optional UI dependencies (Tk is system-provided; Textual via pip).
+#
+# The desktop UI uses Tkinter, which ships with the system Python on most
+# platforms (install the OS "python3-tk" package on Debian/Ubuntu if missing).
+# The terminal UI (TUI) and the "textual serve" web bridge need Textual.
+
+# Textual TUI (+ web serve)
+textual>=0.80.0
+textual-serve>=1.0.0
+
+# FastAPI/uvicorn power the product Web UI server (and the REST API).
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
