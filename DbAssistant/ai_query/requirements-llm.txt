@@ -1,0 +1,20 @@
+# Optional extras for the local NL->SQL LLM (ai_assistant/llm).
+#
+# The default `python` engine needs NONE of these — it is pure-Python and
+# always available. Install these only for the faster engines:
+#
+#   numpy   engine (Stage 1): vectorized MLP
+#   pytorch engine (Stage 2): nano-GPT transformer (default when present)
+#
+# Install with:  pip install -r ai_query/requirements-llm.txt
+#
+# Notes:
+#  * torch wheels are large; on CPU-only machines use the CPU build:
+#       pip install torch --index-url https://download.pytorch.org/whl/cpu
+#  * The `ollama` engine (Stage 3) needs no Python deps — just a running
+#    Ollama server (https://ollama.com). Configure host/model in [ai.llm].
+#  * RAG's optional semantic embeddings: pip install sentence-transformers
+
+numpy>=1.24
+torch>=2.0
+sqlglot>=25.0

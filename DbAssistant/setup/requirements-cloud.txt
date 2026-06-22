@@ -1,0 +1,16 @@
+# Cloud monitoring SDKs (AWS / Azure / GCP)
+boto3>=1.26.0
+botocore[crt]>=1.26.0
+google-api-python-client>=2.70.0
+google-auth>=2.20.0
+google-cloud-monitoring>=2.11.0
+azure-identity>=1.14.0
+azure-mgmt-sql>=1.0.0
+azure-mgmt-monitor>=2.0.0
+azure-mgmt-mysqlflexibleservers>=1.0.0
+azure-mgmt-subscription>=3.0.0
+azure-mgmt-resource>=23.0.0
+azure-mgmt-compute>=30.0.0
+azure-mgmt-postgresqlflexibleservers>=1.0.0
+azure-mgmt-network>=25.0.0
+azure-mgmt-web>=7.0.0

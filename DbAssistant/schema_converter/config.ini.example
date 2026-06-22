@@ -1,0 +1,44 @@
+# ================================================================
+# schema_converter/config.ini.example — Data Migration module (EXAMPLE)
+# ================================================================
+# Owned by the Data Migration (schema_converter) module. Shipped as the default;
+# a live config.ini is created on first save (module settings button,
+# `dbtool migrator config`, API).
+# ================================================================
+
+[schema.conversion]
+# Rows to compare per table when using sample compare-data mode
+compare_sample_size = 10
+# Zero-date handling for MySQL/MariaDB targets: quote | null | omit
+zero_date_strategy = quote
+# Maximum number of selected tables to transfer in parallel when enabled.
+# 1 keeps transfers serial. Higher values open one source + one target DB
+# session per worker for the duration of the transfer run.
+parallel_workers = 2
+# Optional default type-mapping rules: "source_type:target_type, ..."
+# Example: varchar2:text, int:decimal
+type_overrides =
+# Character set used when transferring text data between engines (default utf-8)
+conversion_charset = utf-8
+# G4: default behaviour when a value exceeds the target column: fail | truncate | skip
+overflow_policy = fail
+# G6: NULL / empty-string normalization: keep | empty_to_null | null_to_empty
+null_policy = keep
+# G6: boolean normalization across engines: auto | int | true_false
+bool_policy = auto
+# G7: datetime/timestamp timezone handling: preserve | naive | utc | target
+timezone_policy = preserve
+# G7: target timezone name (e.g. Asia/Kolkata) used when timezone_policy = target
+target_timezone =
+# G3: keep transferring remaining rows when a row fails (reports bad rows)
+continue_on_error = false
+# G8: reset target sequences / auto-increment after a load completes
+reset_sequences = false
+# Max per-table skip/insert errors retained in memory during a transfer
+transfer_error_limit = 1000
+# Max row mismatches reported by the data-compare step
+max_compare_mismatches = 20
+
+[schema.runtime]
+# Directory name (under the system temp dir) for migration checkpoints
+checkpoint_dir = dbtool_migrate_checkpoints

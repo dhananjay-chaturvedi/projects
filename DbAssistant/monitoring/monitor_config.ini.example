@@ -1,0 +1,169 @@
+# ================================================================
+# monitor_config.ini — Monitoring module configuration (EXAMPLE)
+# ================================================================
+# This file is OWNED by the Monitoring module and ships with it
+# independently of the shared config.ini / properties.ini. Everything
+# the monitor needs (refresh cadence, keepalive, SSH timeouts, graph
+# sizes, cloud lookback and alert-notification routing) lives here.
+#
+# This .example is the shipped default. The tool reads it directly when
+# no live monitor_config.ini exists; once you save an edit (UI Monitor
+# settings / `dbtool monitor config set` / API) a live monitor_config.ini
+# is created from this template and used thereafter.
+#
+# Notification SECRETS (Teams webhook URL, SMTP password) are NOT stored
+# here — they remain encrypted under ~/.dbassistant and are set via the
+# Monitor settings UI, `dbtool monitor notify config`, or the API.
+# ================================================================
+
+[monitoring]
+# Desktop Monitor-tab metric refresh interval (milliseconds).
+metrics_refresh_interval = 5000
+# Maximum data points kept in graphs.
+max_graph_data_points = 60
+# Cloud connection keepalive interval (seconds): proactively refreshes
+# non-interactive credentials (AWS keys, Azure SP, GCP SA/ADC, SSO caches).
+cloud_keepalive_interval = 300
+# Database connection keepalive interval (seconds). 0 disables.
+db_keepalive_interval = 120
+# Skip DB keepalive when the metrics loop queried the DB recently (seconds).
+db_keepalive_skip_if_polled_within = 60
+# SSH monitor control-socket keepalive interval (seconds).
+ssh_keepalive_interval = 240
+# Skip per-refresh liveness checks when a real metric/API succeeded recently.
+# 0 = auto window of (metrics_refresh_interval/1000 * 2 + 5) seconds.
+db_metric_skip_ping_if_used_within = 0
+cloud_health_skip_if_used_within = 0
+ssh_keepalive_skip_if_used_within = 0
+# Cloud safety net: force one unconditional credential refresh per monitor at
+# this interval (seconds) regardless of activity. Default: 1800 (30 minutes).
+cloud_force_refresh_interval = 1800
+# Poll interval for legacy standalone monitor_aws.py / monitor_azure.py /
+# monitor_gcp.py script runners. The main app/daemon use their own scheduler.
+standalone_poll_interval = 10
+# Default poll interval (seconds) for the CLI monitor/daemon commands.
+default_poll_interval = 30
+# Default disk mount path used for host/remote OS disk metrics.
+default_disk_path = /
+# Directory for standalone cloud-runner log/PID files.
+standalone_log_dir = logs
+# Sustained-breach counter retention TTL (seconds; default 24h).
+sustained_breach_ttl_seconds = 86400
+# Sustained-breach in-memory cleanup cadence (seconds).
+sustained_breach_gc_interval_seconds = 300
+
+[ssh.connection]
+# SSH connection timeout (seconds) for remote OS monitoring.
+ssh_timeout = 30
+# SSH test command timeout (seconds).
+ssh_test_timeout = 5
+# SSH ControlPersist duration (seconds).
+ssh_control_persist = 600
+# SSH OS detection timeout (seconds).
+ssh_os_detection_timeout = 15
+# SSH monitoring data collection timeout (seconds).
+ssh_monitoring_timeout = 30
+# SSH host-key policy: accept-new (safe default), yes (strict), or no (legacy labs only).
+strict_host_key = accept-new
+# Default SSH port when a connection profile does not specify one.
+default_ssh_port = 22
+# Extra seconds added to ssh_test_timeout for the wrapping subprocess.
+ssh_test_timeout_padding = 5
+# Extra seconds added to ssh_monitoring_timeout for the wrapping subprocess.
+ssh_monitoring_timeout_padding = 10
+
+[monitoring.graphs]
+# Per-metric graph dimensions (pixels).
+metric_graph_width = 250
+metric_graph_height = 70
+
+[monitoring.limits]
+# Maximum data points retained per graph (60 points = 5 min at 5 sec interval).
+max_data_points = 60
+# Default alert-history rows returned by the CLI/API alert listing.
+alerts_default_limit = 50
+# Default alert-history rows returned by the service layer.
+alerts_service_default_limit = 100
+
+[cloud.lookback]
+# How far back (in MINUTES) each cloud provider's metrics API is queried for
+# the latest datapoint on every poll. The newest datapoint in the window is
+# shown (no averaging). This is NOT the poll/refresh rate — it only widens the
+# search window per poll. Valid range: 1 - 1440. Defaults match each
+# provider's typical publish latency.
+# AWS CloudWatch / RDS (and the Performance Insights fallback).
+aws_lookback_minutes = 10
+# Azure Monitor.
+azure_lookback_minutes = 15
+# GCP Cloud Monitoring (Cloud SQL System Insights).
+gcp_lookback_minutes = 15
+
+[cloud.aws]
+# Region used only when a saved AWS profile, boto3 session, and EC2 metadata
+# do not provide one.
+default_region = us-east-1
+# Render the per-component OS CPU breakdown from Performance Insights as a
+# single multi-series "CPU Utilization (PI)" graph (user/system/wait/steal/
+# nice/irq/guest; the sum approximates total CPU). Only fetched when the RDS
+# instance has Performance Insights enabled; additive to the CloudWatch
+# CPUUtilization line. Set to false to skip the extra PI API calls per poll.
+pi_cpu_breakdown = true
+# AWS CLI SSO/login subprocess timeout (seconds).
+login_timeout_seconds = 300
+# EC2 instance-metadata (region) request timeout (seconds).
+metadata_timeout_seconds = 2
+# CloudWatch metric aggregation period (seconds).
+metric_period_seconds = 60
+# Max CloudWatch log events fetched per poll.
+cloudwatch_logs_limit = 100
+# Max RDS log lines tailed per request.
+rds_log_tail_max_lines = 200
+# Performance Insights deep-dive lookback window (minutes).
+performance_insights_lookback_minutes = 60
+# Performance Insights metric granularity (seconds; PI supports 1/60/300/3600).
+performance_insights_period_seconds = 300
+
+[cloud.azure]
+# Azure CLI login subprocess timeout (seconds).
+login_timeout_seconds = 300
+# Azure Monitor metric request batch size.
+metric_chunk_size = 20
+# Azure Monitor metric granularity (ISO-8601 duration).
+metric_interval = PT1M
+
+[cloud.gcp]
+# GCP CLI login subprocess timeout (seconds).
+login_timeout_seconds = 300
+# GCE metadata-server request timeout (seconds).
+metadata_timeout_seconds = 2
+# Max recent Cloud SQL log entries fetched.
+recent_logs_limit = 5
+# Cloud Monitoring time-series page size.
+time_series_page_size = 5
+
+[notifications]
+# Alert notification delivery. SECRETS (Teams webhook URL, SMTP password) are
+# NOT stored here — they are kept encrypted under ~/.dbassistant and set via
+# the Monitor settings UI, `dbtool monitor notify config set`, or the API.
+# Master switch for delivering threshold alerts to external channels.
+enabled = false
+# Minimum severity to deliver: INFO | WARNING | CRITICAL
+min_severity = WARNING
+# Max characters in a delivered Teams/email alert payload.
+max_message_chars = 20000
+# Microsoft Teams delivery timeout/retry settings.
+teams_timeout_seconds = 15
+teams_max_attempts = 2
+teams_max_backoff_seconds = 5
+# Microsoft Teams (Incoming Webhook). URL is stored encrypted, not here.
+teams_enabled = false
+# Email via SMTP. Password is stored encrypted, not here.
+email_enabled = false
+smtp_host =
+smtp_port = 587
+# Use STARTTLS (true for port 587; use port 465 for implicit SSL).
+smtp_use_tls = true
+smtp_username =
+email_from =
+# Comma-separated recipient list.
+email_to =

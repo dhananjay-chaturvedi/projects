@@ -1,0 +1,13 @@
+# Monitoring module — adds to core + cloud SDKs. Install: bash install.sh --module monitor
+psutil>=5.9            # host OS metrics
+# Cloud monitoring (optional, per provider):
+boto3>=1.34            # AWS
+botocore[crt]>=1.34    # AWS SSO / login credential provider (CRT)
+azure-identity>=1.16   # Azure
+azure-mgmt-monitor>=6  # Azure
+azure-mgmt-sql>=3      # Azure
+google-api-python-client>=2  # GCP
+google-auth>=2         # GCP
+# REST API entry point:
+fastapi>=0.110
+uvicorn>=0.29

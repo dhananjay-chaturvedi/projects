@@ -107,52 +107,77 @@ See [`MODULES.md`](MODULES.md) for independent packaging and shipping.
 
 ## Install
 
-### Option A — automated installer (recommended)
-
-```bash
-bash install.sh                 # full tool, creates .venv, installs deps
-bash install.sh --module ai     # one module: core | migrator | ai | monitor | app_builder | full
-bash install.sh --no-optional   # skip optional extras (e.g. local LLM)
-```
-
-### Option B — pip / editable (packaging via `pyproject.toml`)
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e .                      # core only (pure-Python)
-pip install -e ".[drivers]"           # + database drivers
-pip install -e ".[api,ui]"            # + REST API/Web server + Textual TUI
-pip install -e ".[cloud]"             # + AWS/Azure/GCP monitoring SDKs
-pip install -e ".[llm]"               # + local LLM engines & semantic RAG
-pip install -e ".[all]"               # everything except dev tooling
-# A `dbtool` console script is installed on your PATH.
-```
-
-### Option C — manual
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r setup/requirements.txt          # full
-# or a subset:
-pip install -r setup/requirements-core.txt
-pip install -r setup/requirements-drivers.txt
-pip install -r setup/requirements-api.txt
-pip install -r setup/requirements-ui.txt
-```
-
 **Prerequisites:** Python 3.10+. Tkinter for the Desktop UI (`sudo apt-get
 install python3-tk` on Debian/Ubuntu; bundled on macOS/Windows). For the AI
 assistant, install at least one CLI backend: [Claude](https://claude.ai/download),
 [Cursor](https://cursor.com), or [Codex](https://github.com/openai/codex).
 
+### Option A — clone from Git (recommended)
+
+```bash
+git clone https://github.com/YOUR_ORG/dbassistant.git
+cd dbassistant
+bash install.sh                    # full tool: .venv + deps + config.ini
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python dbtool.py modules           # verify modules
+```
+
+Single-module install (still includes the shared core):
+
+```bash
+bash install.sh --module ai        # core | migrator | ai | monitor | app_builder | full
+bash install.sh --no-optional      # skip optional extras (e.g. local LLM)
+```
+
+The installer copies `config.ini` and `properties.ini` from
+`common/config/*.ini.example`. Live config files are **not** in Git — see
+[`.gitignore`](.gitignore).
+
+Pre-built zip bundles (offline/air-gapped) are described in
+[`website/src/content/docs/getting-started/installation.md`](website/src/content/docs/getting-started/installation.md)
+and built with `bash shipper.sh` (attach releases to GitHub Releases).
+
+### Option B — pip / editable (`pyproject.toml`)
+
+```bash
+git clone https://github.com/YOUR_ORG/dbassistant.git
+cd dbassistant
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .                      # core only (pure-Python)
+pip install -e ".[drivers]"             # + database drivers
+pip install -e ".[api,ui]"              # + REST API/Web server + Textual TUI
+pip install -e ".[cloud]"               # + AWS/Azure/GCP monitoring SDKs
+pip install -e ".[llm]"                 # + local LLM engines & semantic RAG
+pip install -e ".[all]"                 # everything except dev tooling
+cp common/config/config.ini.example config.ini
+cp common/config/properties.ini.example properties.ini
+# Installs a `dbtool` console script on your PATH.
+```
+
+### Option C — manual pip requirements
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r setup/requirements-full.txt
+# or a subset:
+pip install -r setup/requirements-core.txt -r setup/requirements-drivers.txt
+pip install -r setup/requirements-api.txt
+pip install -r setup/requirements-ui.txt
+cp common/config/config.ini.example config.ini
+cp common/config/properties.ini.example properties.ini
+```
+
 ---
 
 ## Quickstart
 
+After `bash install.sh` (or copying the `*.ini.example` files as shown above):
+
 ```bash
-# 1) Create config files from the examples (the installer does this for you)
-cp common/config/config.ini.example config.ini
-cp common/config/properties.ini.example properties.ini
+source .venv/bin/activate               # if not already active
+
+# 1) Verify install
+python dbtool.py modules
 
 # 2) Add a connection (interactive in any UI, or via CLI)
 python dbtool.py connections add        # follow the prompts
@@ -263,27 +288,31 @@ Everything the tool generates lives under `~/.dbassistant/` (override with
 | [`docs/UI_ARCHITECTURE.md`](docs/UI_ARCHITECTURE.md) | Desktop / TUI / Web separation |
 | [`docs/ADDING_FEATURES.md`](docs/ADDING_FEATURES.md) | UI/CLI/API parity guide for contributors |
 | [`MODULES.md`](MODULES.md) | Independent module packaging & shipping |
+| [`FIRST_COMMIT.md`](FIRST_COMMIT.md) | Public-repo checklist & first-commit guide |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to contribute (parity, PR checklist) |
+| [`SECURITY.md`](SECURITY.md) | Vulnerability reporting & secure deployment |
 | [`website/`](website/) | Full marketing + docs site (Astro + Starlight) |
 
 The full reference site (every command, route, and config key) is in
-[`website/`](website/) — run `cd website && npm install && npm run dev`.
+[`website/`](website/) — run `cd website && npm ci && npm run dev`.
 
 ---
 
-## Development & testing
+## Development
 
 ```bash
 source .venv/bin/activate
-python -m pytest tests/ -q          # full automated suite
+bash install.sh                       # or: python setup/install.py --module full
+python setup/install.py --verify-only --module full --skip-venv
+python dbtool.py --help
 ```
 
-[`tests/TEST_TYPE_REFERENCE.md`](tests/TEST_TYPE_REFERENCE.md) is the single
-source of truth for what "testing" means here — scopes, required test types, and
-the surfaces (CLI / API / UI) to exercise.
-
 **Contributing a feature?** Read [`docs/ADDING_FEATURES.md`](docs/ADDING_FEATURES.md):
-put logic in the shared service, then wire the UI **and** CLI **and** API in the
-same change, with tests for the CLI and API paths.
+put logic in the shared service, then wire the Desktop UI, TUI, Web UI, CLI,
+and REST API in the same change so surfaces stay in parity.
+
+**Publishing this repo?** See [`FIRST_COMMIT.md`](FIRST_COMMIT.md) for what to
+include in the initial commit and what `.gitignore` excludes.
 
 ---
 
