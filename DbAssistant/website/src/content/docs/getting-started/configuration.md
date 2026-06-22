@@ -131,11 +131,11 @@ Headless verification against saved DB and cloud profiles:
 PYTHONPATH=. .venv/bin/python scripts/live_smoke_matrix.py
 ```
 
-Override connection names:
+Override connection names (use your saved profile names):
 
 ```bash
-export DBTOOL_SMOKE_DB_CONNS="local_mariadb,aws_dev_pushdb"
-export DBTOOL_SMOKE_CLOUD_CONNS="aws_dev_pushdb,gcp-dev-1,gcp-dev-2,lu-rs-stg-1,lu-rs-stg-2"
+export DBTOOL_SMOKE_DB_CONNS="prod,staging"
+export DBTOOL_SMOKE_CLOUD_CONNS="cloud-aws-prod,cloud-gcp-staging"
 ```
 
 ## Next steps

@@ -97,7 +97,7 @@ class MonitorDBConnectionCreate(BaseModel):
     port: str = Field("", examples=["3306"])
     database: str = Field("", description="Database name (non-Oracle)")
     service: str = Field("", description="Oracle service name")
-    username: str = Field("", examples=["dheeru"])
+    username: str = Field("", examples=["dbuser"])
     password: str = Field("", description="Stored encrypted; empty to omit")
     ssh_tunnel: Optional[MonitorSSHTunnelSpec] = Field(
         None,

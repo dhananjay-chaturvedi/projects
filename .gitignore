@@ -1,0 +1,3 @@
+# Root-level artifacts (monorepo wrapper around DbAssistant/)
+DbAssistant.tar.gz
+*.tar.gz

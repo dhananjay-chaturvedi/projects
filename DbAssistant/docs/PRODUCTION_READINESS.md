@@ -55,21 +55,21 @@ Focused checks also passed for:
 - AI execution rules, read-only mutation guard, and PII masking.
 - FastAPI API key/KMS/body-limit validation.
 
-Live checks completed:
+Live checks completed (against operator-defined saved profiles; names anonymized):
 
-- `local_mariadb` SQL query: passed.
-- `local_mariadb` monitor poll: passed, no false CRITICAL alerts after threshold cleanup.
+- `local-postgres` SQL query: passed.
+- `local-postgres` monitor poll: passed, no false CRITICAL alerts after threshold cleanup.
 - Local OS metrics: passed.
-- Remote OS metrics over SSH to `local`: passed.
-- `gcp-cloud-db-dbassistant` PostgreSQL query: passed.
-- `gcp-cloud-db-dbassistant` Cloud SQL metrics: passed. Cloud Logging returned HTTP 403 due missing logging viewer permission.
-- `aws-pushdb-dev` AWS CloudWatch/RDS metrics: passed.
-- `aws-dev-rds-pushdb` direct SQL connection: failed with network timeout to the RDS endpoint from this machine.
+- Remote OS metrics over SSH to a bastion host: passed.
+- `gcp-cloudsql-demo` PostgreSQL query: passed.
+- `gcp-cloudsql-demo` Cloud SQL metrics: passed. Cloud Logging returned HTTP 403 due missing logging viewer permission.
+- `aws-rds-demo` AWS CloudWatch/RDS metrics: passed.
+- `aws-rds-staging` direct SQL connection: failed with network timeout to the RDS endpoint from the test runner.
 
 ## Residual Risks
 
 - This pass improves failure handling substantially, but no software can be guaranteed to “never fail.” The current behavior is designed to fail with clear reasons and avoid silent corruption or unsafe execution.
-- `aws-dev-rds-pushdb` direct SQL requires network/VPC/security-group reachability before it can be certified.
+- `aws-rds-staging` direct SQL requires network/VPC/security-group reachability before it can be certified.
 - GCP Cloud Logging requires `roles/logging.viewer` or equivalent for the calling identity if logs must be shown.
 - API authentication is enforced when `DBTOOL_API_KEY` is set or any KMS key exists. If neither is configured, keep the listener local or put it behind an auth proxy.
 - Result caps prevent memory blowups for ad-hoc queries. Exports that need full-table dumps should use explicit limits and production-safe operational windows.

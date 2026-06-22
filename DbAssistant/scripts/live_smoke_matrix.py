@@ -17,10 +17,10 @@ Environment overrides:
     DBTOOL_SMOKE_SKIP_API=1     CLI-only (skip API block)
     DBTOOL_INCLUDE_TUNNEL=1     Include SSH-tunnel DB connections
 
-Example matrix for your named cloud targets:
+Example matrix (use your saved connection / cloud profile names):
 
-    export DBTOOL_SMOKE_DB_CONNS="local_mariadb,aws_dev_pushdb"
-    export DBTOOL_SMOKE_CLOUD_CONNS="aws_dev_pushdb,gcp-dev-1,gcp-dev-2,lu-rs-stg-1,lu-rs-stg-2"
+    export DBTOOL_SMOKE_DB_CONNS="prod,staging"
+    export DBTOOL_SMOKE_CLOUD_CONNS="cloud-aws-prod,cloud-gcp-staging"
     PYTHONPATH=. .venv/bin/python scripts/live_smoke_matrix.py
 
 Exit code 0 when all executed checks pass; 1 when any hard failure occurs.
@@ -51,18 +51,9 @@ from tests.integration_helpers import (  # noqa: E402
     tunnel_unreachable,
 )
 
-# Preferred names from live smoke plans; overridden by env or saved profiles.
-DEFAULT_SMOKE_DB = (
-    "local_mariadb",
-    "aws_dev_pushdb",
-    "ntfd_push_notification",
-    "aws_stg_pushdb",
-    "rw-dev-histvm",
-)
-DEFAULT_SMOKE_CLOUD = (
-    "aws_dev_pushdb",
-    "aws-pushdb-dev",
-)
+# Fallback when no env override and no saved profiles exist (usually empty).
+DEFAULT_SMOKE_DB: tuple[str, ...] = ()
+DEFAULT_SMOKE_CLOUD: tuple[str, ...] = ()
 
 
 @dataclass

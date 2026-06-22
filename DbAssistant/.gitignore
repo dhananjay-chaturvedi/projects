@@ -58,6 +58,7 @@ built_apps/
 # Shipper output
 releases/
 *.zip
+*.tar.gz
 
 # ── OS / editor ──────────────────────────────────────────────────────────────
 .DS_Store

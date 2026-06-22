@@ -1,15 +1,15 @@
 """Real end-to-end migration test for the source/target schema dropdowns.
 
-Connects to the live GCP PostgreSQL (source) and local MariaDB (target),
-creates a real table with data in PostgreSQL ``public``, then drives the exact
-SchemaConverterUI code path (namespace dropdowns, target qualification, schema
-conversion and data transfer) and verifies the rows land in MariaDB ``test``.
+Uses saved connection profiles (source PostgreSQL, target MariaDB/MySQL by
+default). Override profile names with environment variables when your local
+names differ.
 
 Run:  PYTHONPATH=. .venv/bin/python scripts/e2e_migration_dropdown_test.py
 """
 
 from __future__ import annotations
 
+import os
 import sys
 import traceback
 
@@ -19,8 +19,8 @@ from schema_converter.schema_converter_ui import SchemaConverterUI
 from schema_converter.converter import SchemaConverter, DataConverter
 
 
-SRC_NAME = "my-gcp-pg-db"
-TGT_NAME = "local_mariadb"
+SRC_NAME = os.environ.get("DBTOOL_E2E_SRC_CONN", "source_postgres")
+TGT_NAME = os.environ.get("DBTOOL_E2E_TGT_CONN", "target_mysql")
 TARGET_DB = "test"
 SRC_TABLE = "public.dbtool_e2e_migration"
 SRC_TABLE_BARE = "dbtool_e2e_migration"
