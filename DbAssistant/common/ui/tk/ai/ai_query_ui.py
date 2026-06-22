@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # description: AI query UI manager for the tool
 # initial version: 08-APR-2026
-# Author: Dhananjay Chaturvedi (dheeru)
+# Author: Dhananjay Chaturvedi
 # ---------------------------------------------------------------------
 
 # Allow ``python ai_query/ai_query_ui.py`` from project root.

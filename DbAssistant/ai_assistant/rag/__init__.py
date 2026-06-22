@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # description: Retrieval-Augmented Generation (RAG) for connected databases
 # initial version: 09-JUN-2026
-# Author: Dhananjay Chaturvedi (dheeru)
+# Author: Dhananjay Chaturvedi
 # ---------------------------------------------------------------------
 """
 RAG subsystem for the AI Query Assistant.

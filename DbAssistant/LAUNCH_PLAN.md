@@ -134,8 +134,8 @@ if __name__ == "__main__":
 ```
 
 ### B2. `LICENSE`
-Pick MIT (recommended for adoption) or Apache-2.0 (adds explicit patent grant).
-Add the chosen license text as `LICENSE` and keep the classifier in sync.
+Use **MIT** (see [`LICENSE`](LICENSE)). Keep `pyproject.toml` `license` and the
+PyPI classifier in sync.
 
 ### B3. `.gitignore` (root) — minimum
 ```gitignore

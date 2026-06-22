@@ -483,8 +483,8 @@ See `CLAUDE.md` for coding standards and architecture details.
 
 ## 📄 License
 
-See the `LICENSE` file (if present) or your distribution agreement for licensing
-terms.
+**MIT License** — Copyright (c) 2026 Dhananjay Chaturvedi. See
+[`LICENSE`](../LICENSE) in the project root for full terms.
 
 ## Acknowledgments
 

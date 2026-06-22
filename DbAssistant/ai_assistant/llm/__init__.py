@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # description: From-scratch tiny LLM (neural language model) for NL->SQL
 # initial version: 09-JUN-2026
-# Author: Dhananjay Chaturvedi (dheeru)
+# Author: Dhananjay Chaturvedi
 # ---------------------------------------------------------------------
 """
 A self-contained, dependency-free neural language model you can train on your

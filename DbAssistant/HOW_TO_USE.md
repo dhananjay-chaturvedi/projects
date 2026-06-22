@@ -1104,11 +1104,11 @@ Follow-up messages in the Chat tab use the same auto-execute pipeline when those
 
 ```bash
 # One-shot with SQL mode
-dbtool.py ai --conn local_mariadb --sql-mode strict_summary "how many tables in this database?"
-dbtool.py ai --conn local_mariadb --sql-mode open "count rows in EMPLOYEES"
+dbtool.py ai --conn prod --sql-mode strict_summary "how many tables in this database?"
+dbtool.py ai --conn prod --sql-mode open "count rows in EMPLOYEES"
 
 # Session with mode + execution rules
-dbtool.py ai session new --conn local_mariadb --sql-mode summary
+dbtool.py ai session new --conn prod --sql-mode summary
 dbtool.py ai session set-mode --session tab1 --sql-mode open
 dbtool.py ai session ask --session tab1 "show 5 employee names"
 dbtool.py ai session execute-sql --session tab1 --sql "SELECT EMP_ID FROM EMPLOYEES LIMIT 5"
@@ -1118,7 +1118,7 @@ dbtool.py ai session execute-sql --session tab1 --sql "SELECT EMP_ID FROM EMPLOY
 # REST API
 curl -X POST http://127.0.0.1:8000/api/ai/query \
   -H 'Content-Type: application/json' \
-  -d '{"connection":"local_mariadb","question":"count employees","sql_mode":"open"}'
+  -d '{"connection":"prod","question":"count employees","sql_mode":"open"}'
 
 curl -X PATCH http://127.0.0.1:8000/api/ai/sessions/{id} \
   -H 'Content-Type: application/json' \
@@ -1129,7 +1129,7 @@ curl -X POST http://127.0.0.1:8000/api/ai/sessions/{id}/execute-sql \
   -d '{"sql":"SELECT EMP_ID FROM EMPLOYEES LIMIT 5"}'
 ```
 
-**Database engines:** Strict-summary validation and EXPLAIN/LIMIT rules include dialect handling for MySQL, MariaDB, PostgreSQL, Oracle, SQL Server, and SQLite. Live AI tests were run against local MariaDB; unit tests cover all registered engine types.
+**Database engines:** Strict-summary validation and EXPLAIN/LIMIT rules include dialect handling for MySQL, MariaDB, PostgreSQL, Oracle, SQL Server, and SQLite. Unit tests cover all registered engine types.
 
 
 ---

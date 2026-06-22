@@ -4,7 +4,7 @@
 # ---------------------------------------------------------------------
 # description: UI manager for the tool
 # initial version: 08-APR-2026
-# Author: Dhananjay Chaturvedi (dheeru)
+# Author: Dhananjay Chaturvedi
 # ---------------------------------------------------------------------
 
 import atexit

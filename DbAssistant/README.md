@@ -9,6 +9,7 @@ need a single, auditable view across fleets of databases.
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)]()
 [![Surfaces](https://img.shields.io/badge/surfaces-Desktop%20%7C%20TUI%20%7C%20Web%20%7C%20CLI%20%7C%20API-2196F3.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **UI / CLI / API parity is a hard guarantee.** Every feature is implemented
 > once in a shared service layer and wired into all surfaces, so the Desktop UI,
@@ -313,6 +314,16 @@ and REST API in the same change so surfaces stay in parity.
 
 **Publishing this repo?** See [`FIRST_COMMIT.md`](FIRST_COMMIT.md) for what to
 include in the initial commit and what `.gitignore` excludes.
+
+---
+
+## License
+
+**MIT License** — Copyright (c) 2026 Dhananjay Chaturvedi.
+
+You may use, modify, and distribute this software under the terms in
+[`LICENSE`](LICENSE). The copyright holder retains ownership of the codebase;
+the MIT license grants permission to use it with minimal restrictions.
 
 ---
 
