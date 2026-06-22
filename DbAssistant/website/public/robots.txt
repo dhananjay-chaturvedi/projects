@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://dbassistant.example.com/sitemap-index.xml
