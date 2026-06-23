@@ -12,6 +12,8 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
+    env:
+      DBASSISTANT_HOME: /tmp/dbassistant-ci-home
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,13 +23,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install package (core + API)
+      - name: Install system and Python dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk
           python -m pip install -U pip
-          pip install -e ".[api]"
+          pip install -e ".[drivers,api,ui]"
 
       - name: Verify module layout and imports
-        run: python setup/install.py --verify-only --module full --skip-venv
+        run: python setup/install.py --verify-only --module full --skip-venv --no-optional
 
       - name: Smoke test CLI
         run: |
