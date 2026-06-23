@@ -11,7 +11,7 @@
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-Email the maintainer with:
+Email **[dhananjaychaturvedi93@gmail.com](mailto:dhananjaychaturvedi93@gmail.com)** with:
 
 - A description of the issue and impact
 - Steps to reproduce

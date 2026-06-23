@@ -9,7 +9,7 @@
 
 [Unit]
 Description=DbManagementTool REST API
-Documentation=https://github.com/your-org/DbManagementTool
+Documentation=https://github.com/dhananjay-chaturvedi/dbassistant
 After=network.target dbtool-monitor.service
 
 [Service]

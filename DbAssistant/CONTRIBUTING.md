@@ -17,7 +17,7 @@ TUI, Web UI, CLI, and REST API together.
 ## Development setup
 
 ```bash
-git clone https://github.com/YOUR_ORG/dbassistant.git
+git clone https://github.com/dhananjay-chaturvedi/dbassistant.git
 cd dbassistant
 bash install.sh
 source .venv/bin/activate

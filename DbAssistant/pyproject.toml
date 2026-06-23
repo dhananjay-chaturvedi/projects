@@ -86,10 +86,15 @@ all = [
 
 [project.scripts]
 dbtool = "app.dbtool:main"
+dbassistant = "common.ui.launcher:launch_desktop_ui"
+dbassistant-cli = "app.dbtool:main"
+dbassistant-api = "api:main"
 
 [project.urls]
-Documentation = "https://dbassistant.example.com"
-Source = "https://github.com/your-org/dbassistant"
+Homepage = "https://github.com/dhananjay-chaturvedi/dbassistant"
+Documentation = "https://dhananjay-chaturvedi.github.io/dbassistant/"
+Repository = "https://github.com/dhananjay-chaturvedi/dbassistant"
+Issues = "https://github.com/dhananjay-chaturvedi/dbassistant/issues"
 
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }

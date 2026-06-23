@@ -12,7 +12,7 @@
 
 [Unit]
 Description=DbManagementTool Monitoring Daemon
-Documentation=https://github.com/your-org/DbManagementTool
+Documentation=https://github.com/dhananjay-chaturvedi/dbassistant
 After=network.target
 Wants=network-online.target
 

@@ -13,19 +13,20 @@ A workflow at `.github/workflows/website.yml` builds on every push to
 1. Repository **Settings → Pages → Build and deployment → Source =
    GitHub Actions**.
 2. Push to `main`. The workflow runs, builds, and publishes.
-3. Site is live at `https://<org>.github.io/<repo>/`.
+3. Site is live at `https://dhananjay-chaturvedi.github.io/dbassistant/`.
 
 ### Custom domain
 
-1. **Settings → Pages → Custom domain** → enter `dbassistant.example.com`.
+1. **Settings → Pages → Custom domain** → enter your domain (e.g. `docs.example.com`).
 2. Add a `CNAME` record at your DNS provider pointing to
-   `<org>.github.io`.
+   `dhananjay-chaturvedi.github.io`.
 3. GitHub Pages provisions Let's Encrypt TLS automatically.
 
-Update `astro.config.mjs`:
+Update `astro.config.mjs` — set `site` to your domain and remove `base`:
 
 ```js
-site: 'https://dbassistant.example.com',
+site: 'https://docs.example.com',
+// base: '/dbassistant/',  // remove when using a root custom domain
 ```
 
 Re-run the workflow.

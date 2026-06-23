@@ -2,11 +2,11 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
-// Update `site` when you attach your domain.  Leaving it generic lets the
-// site work on Cloudflare Pages, GitHub Pages, Netlify, or a custom domain
-// without rebuilds.
+// GitHub Pages project site: https://dhananjay-chaturvedi.github.io/dbassistant/
+// For a custom domain at the repo root, set site to that domain and remove base.
 export default defineConfig({
-  site: 'https://dbassistant.example.com',
+  site: 'https://dhananjay-chaturvedi.github.io',
+  base: '/dbassistant/',
   trailingSlash: 'ignore',
   integrations: [
     starlight({
@@ -21,14 +21,14 @@ export default defineConfig({
         {
           icon: 'github',
           label: 'GitHub',
-          href: 'https://github.com/your-org/dbassistant',
+          href: 'https://github.com/dhananjay-chaturvedi/dbassistant',
         },
       ],
       customCss: ['./src/styles/custom.css'],
       lastUpdated: true,
       editLink: {
         baseUrl:
-          'https://github.com/your-org/dbassistant/edit/main/website/',
+          'https://github.com/dhananjay-chaturvedi/dbassistant/edit/main/website/',
       },
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 4 },
       head: [

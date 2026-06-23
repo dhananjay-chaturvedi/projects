@@ -15,7 +15,7 @@ Track **source only**:
 | Setup | `setup/` (installer, requirements, shipper) |
 | Config templates | `**/*.ini.example` (not live `config.ini`) |
 | Docs | `README.md`, `HOW_TO_USE.md`, `MODULES.md`, `docs/`, `website/src/`, `website/public/`, `website/package.json`, `website/package-lock.json`, `website/astro.config.mjs`, `website/tsconfig.json`, `website/DEPLOY.md`, `website/README.md` |
-| Packaging | `pyproject.toml`, `VERSION`, `LICENSE`, `.gitignore` |
+| Packaging | `pyproject.toml`, `VERSION`, `LICENSE`, `.gitignore`, `CHANGELOG.md` |
 | Planning (optional) | `LAUNCH_PLAN.md`, `FIRST_COMMIT.md` |
 
 ## What must NOT be committed
@@ -31,7 +31,28 @@ Track **source only**:
 | `__pycache__/`, `*.pyc` | Bytecode |
 | `.env` | Secrets |
 
-## Commands (new repo with DbAssistant as root)
+## Publishing to the public `dbassistant` repository
+
+DbAssistant is developed in this monorepo under `DbAssistant/` but published from
+**https://github.com/dhananjay-chaturvedi/dbassistant** (repo root = product root).
+
+```bash
+# 1) Create the public repo on GitHub (empty, no README), then clone it:
+git clone https://github.com/dhananjay-chaturvedi/dbassistant.git /tmp/dbassistant
+
+# 2) Sync from this folder:
+./scripts/sync_public_repo.sh /tmp/dbassistant
+
+# 3) Commit and push from the public clone:
+cd /tmp/dbassistant
+git add -A
+git commit -m "Release v1.0.0"
+git push -u origin main
+
+# 4) Enable GitHub Pages: Settings → Pages → Source = GitHub Actions
+# 5) (Optional) Create GitHub Release v1.0.0 to publish to PyPI
+```
+
 
 ```bash
 cd DbAssistant
@@ -96,5 +117,6 @@ npm run build
 # publish website/dist/ to GitHub Pages / Cloudflare Pages (see website/DEPLOY.md)
 ```
 
-Replace placeholder URLs in `website/astro.config.mjs` (`your-org/dbassistant`,
-`dbassistant.example.com`) before going live.
+Replace placeholder URLs in `website/astro.config.mjs` before going live — they
+are configured for `dhananjay-chaturvedi/dbassistant` and GitHub Pages at
+`https://dhananjay-chaturvedi.github.io/dbassistant/`.

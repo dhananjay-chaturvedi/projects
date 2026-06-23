@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://dbassistant.example.com/sitemap-index.xml
+Sitemap: https://dhananjay-chaturvedi.github.io/dbassistant/sitemap-index.xml

@@ -6,6 +6,8 @@ functionality across five surfaces**: a Tkinter **Desktop UI**, a Textual
 database engineers, application/full-stack developers, and the executives who
 need a single, auditable view across fleets of databases.
 
+[![CI](https://github.com/dhananjay-chaturvedi/dbassistant/actions/workflows/ci.yml/badge.svg)](https://github.com/dhananjay-chaturvedi/dbassistant/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-2196F3)](https://dhananjay-chaturvedi.github.io/dbassistant/)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)]()
 [![Surfaces](https://img.shields.io/badge/surfaces-Desktop%20%7C%20TUI%20%7C%20Web%20%7C%20CLI%20%7C%20API-2196F3.svg)]()
@@ -116,7 +118,7 @@ assistant, install at least one CLI backend: [Claude](https://claude.ai/download
 ### Option A — clone from Git (recommended)
 
 ```bash
-git clone https://github.com/YOUR_ORG/dbassistant.git
+git clone https://github.com/dhananjay-chaturvedi/dbassistant.git
 cd dbassistant
 bash install.sh                    # full tool: .venv + deps + config.ini
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
@@ -141,7 +143,7 @@ and built with `bash shipper.sh` (attach releases to GitHub Releases).
 ### Option B — pip / editable (`pyproject.toml`)
 
 ```bash
-git clone https://github.com/YOUR_ORG/dbassistant.git
+git clone https://github.com/dhananjay-chaturvedi/dbassistant.git
 cd dbassistant
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .                      # core only (pure-Python)
@@ -280,6 +282,7 @@ Everything the tool generates lives under `~/.dbassistant/` (override with
 
 | Doc | Purpose |
 |-----|---------|
+| **[Documentation site](https://dhananjay-chaturvedi.github.io/dbassistant/)** | Full reference (CLI, API, config, guides) |
 | [`docs/README.md`](docs/README.md) | Product overview |
 | [`docs/QUICKSTART.md`](docs/QUICKSTART.md) | Short getting-started guide |
 | [`docs/HOWTORUN.md`](docs/HOWTORUN.md) | Run UI / TUI / Web / CLI / API |

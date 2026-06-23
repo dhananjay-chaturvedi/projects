@@ -14,7 +14,12 @@ Docker, systemd) can use either path.
 
 from app.headless.api import MOUNTED_MODULES, app
 
-__all__ = ["app", "MOUNTED_MODULES"]
+__all__ = ["app", "MOUNTED_MODULES", "main"]
+
+
+def main() -> None:
+    """Console entry point for ``dbassistant-api`` (``pip install dbassistant``)."""
+    raise SystemExit(_serve())
 
 
 def _serve() -> int:
@@ -57,4 +62,4 @@ def _serve() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(_serve())
+    main()

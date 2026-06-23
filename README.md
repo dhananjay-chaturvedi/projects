@@ -1,13 +1,22 @@
 # projects
 
-Monorepo workspace. The **DbAssistant** database management tool lives in
-[`DbAssistant/`](DbAssistant/).
+Private development workspace. The **DbAssistant** database management tool
+lives in [`DbAssistant/`](DbAssistant/) during local development.
 
-## DbAssistant
+## Public repository
 
-Multi-engine database management with Desktop, TUI, Web, CLI, and REST API
-surfaces. See [`DbAssistant/README.md`](DbAssistant/README.md) for install and
-usage.
+DbAssistant is published from a dedicated public repository:
+
+**https://github.com/dhananjay-chaturvedi/dbassistant**
+
+- Documentation: https://dhananjay-chaturvedi.github.io/dbassistant/
+- Install: `git clone https://github.com/dhananjay-chaturvedi/dbassistant.git`
+
+To sync changes from this monorepo folder to the public repo, copy or push the
+contents of `DbAssistant/` to the root of `dbassistant` (not the `DbAssistant/`
+subfolder). See [`DbAssistant/FIRST_COMMIT.md`](DbAssistant/FIRST_COMMIT.md).
+
+## Local development
 
 ```bash
 cd DbAssistant
@@ -19,8 +28,3 @@ python dbtool.py modules
 ## License
 
 **MIT License** — Copyright (c) 2026 Dhananjay Chaturvedi.
-
-You may use, modify, and distribute DbAssistant freely under the terms in
-[`LICENSE`](LICENSE) (same text as [`DbAssistant/LICENSE`](DbAssistant/LICENSE)).
-The copyright holder retains ownership of the codebase; the MIT license grants
-you permission to use it with minimal restrictions.
