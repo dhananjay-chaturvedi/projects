@@ -1,8 +1,6 @@
 # Standalone-repo variant — use this file when DbAssistant is the Git repository root.
-# (GitHub Actions only reads workflows from the repository root .github/workflows/.)
-#
-# If the project lives in a monorepo subfolder, the active workflow is at the
-# parent repo: ../../.github/workflows/website.yml
+# Public repo: https://github.com/dhananjay-chaturvedi/dbassistant
+# Docs URL:    https://dhananjay-chaturvedi.github.io/dbassistant/
 
 name: Deploy documentation site
 
